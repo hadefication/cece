@@ -55,7 +55,10 @@ func runAttach(cmd *cobra.Command, args []string) error {
 		return attachToSession(channelName)
 	}
 
-	allSessions := tmux.ListSessions("cece-")
+	allSessions, err := tmux.ListSessions("cece-")
+	if err != nil {
+		return err
+	}
 	var matches []string
 	for _, s := range allSessions {
 		if strings.Contains(s.Name, name) {

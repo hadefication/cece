@@ -3,9 +3,11 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hadefication/cece/internal/config"
+	"github.com/hadefication/cece/internal/history"
 	"github.com/hadefication/cece/internal/process"
 	"github.com/hadefication/cece/internal/session"
 	"github.com/hadefication/cece/internal/tmux"
@@ -25,7 +27,9 @@ func init() {
 
 func killSession(sessionName string) error {
 	panePID := tmux.GetPanePID(sessionName)
-	tmux.SendCtrlC(sessionName)
+	if err := tmux.SendCtrlC(sessionName); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not send Ctrl-C to %s: %v\n", sessionName, err)
+	}
 	time.Sleep(3 * time.Second)
 	if panePID != "" {
 		if err := process.KillTree(panePID); err != nil {
@@ -35,7 +39,28 @@ func killSession(sessionName string) error {
 	if err := tmux.KillSession(sessionName); err != nil {
 		return fmt.Errorf("could not kill tmux session %q: %w", sessionName, err)
 	}
+	if err := history.Log(history.Entry{
+		Session:   sessionName,
+		Type:      sessionType(sessionName),
+		Action:    "stop",
+		Timestamp: time.Now(),
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
+	}
 	return nil
+}
+
+func sessionType(name string) string {
+	switch {
+	case strings.HasPrefix(name, "cece-remote-"):
+		return "remote"
+	case strings.HasPrefix(name, "cece-channel-"):
+		return "channel"
+	case strings.HasPrefix(name, "cece-default"):
+		return "autostart"
+	default:
+		return "session"
+	}
 }
 
 func runRemoteStop(cmd *cobra.Command, args []string) error {
@@ -64,7 +89,10 @@ func runRemoteStop(cmd *cobra.Command, args []string) error {
 	if profile != "" {
 		prefix = "cece-remote-" + profile + "-"
 	}
-	sessions := tmux.ListSessions(prefix)
+	sessions, err := tmux.ListSessions(prefix)
+	if err != nil {
+		return err
+	}
 	if len(sessions) == 0 {
 		fmt.Println("No remote control sessions to stop.")
 		return nil

@@ -5,12 +5,13 @@ import (
 	"runtime"
 
 	"github.com/hadefication/cece/internal/launchagent"
+	"github.com/hadefication/cece/internal/systemd"
 	"github.com/spf13/cobra"
 )
 
 var autostartDisableCmd = &cobra.Command{
 	Use:   "disable",
-	Short: "Remove autostart LaunchAgent",
+	Short: "Remove autostart service",
 	RunE:  runAutostartDisable,
 }
 
@@ -19,12 +20,17 @@ func init() {
 }
 
 func runAutostartDisable(cmd *cobra.Command, args []string) error {
-	if runtime.GOOS != "darwin" {
-		return fmt.Errorf("autostart is only supported on macOS")
-	}
-
-	if err := launchagent.Uninstall(profile); err != nil {
-		return err
+	switch runtime.GOOS {
+	case "darwin":
+		if err := launchagent.Uninstall(profile); err != nil {
+			return err
+		}
+	case "linux":
+		if err := systemd.Uninstall(profile); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("autostart is not supported on %s", runtime.GOOS)
 	}
 
 	fmt.Println("Autostart disabled.")

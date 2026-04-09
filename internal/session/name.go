@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
@@ -43,18 +44,32 @@ func TmuxChannelName(profile, channel string) string {
 }
 
 func DetectMachine() string {
+	// macOS: use system_profiler for model name
 	out, err := exec.Command("system_profiler", "SPHardwareDataType").Output()
-	if err != nil {
-		return "unknown"
-	}
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.Contains(line, "Model Name") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				return strings.ReplaceAll(strings.TrimSpace(parts[1]), " ", "-")
+	if err == nil {
+		for _, line := range strings.Split(string(out), "\n") {
+			if strings.Contains(line, "Model Name") {
+				parts := strings.SplitN(line, ":", 2)
+				if len(parts) == 2 {
+					return strings.ReplaceAll(strings.TrimSpace(parts[1]), " ", "-")
+				}
 			}
 		}
 	}
+
+	// Linux: try product name from DMI
+	if data, err := os.ReadFile("/sys/devices/virtual/dmi/id/product_name"); err == nil {
+		name := strings.TrimSpace(string(data))
+		if name != "" && name != "System Product Name" {
+			return strings.ReplaceAll(name, " ", "-")
+		}
+	}
+
+	// Fallback: hostname
+	if host, err := os.Hostname(); err == nil {
+		return host
+	}
+
 	return "unknown"
 }
 

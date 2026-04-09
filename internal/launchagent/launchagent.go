@@ -17,15 +17,6 @@ func xmlEscape(s string) string {
 	return s
 }
 
-func homeDir() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "fatal: cannot determine home directory: %v\n", err)
-		os.Exit(1)
-	}
-	return home
-}
-
 func label(profile string) string {
 	if profile != "" {
 		return "com.cece.autostart." + profile
@@ -34,7 +25,10 @@ func label(profile string) string {
 }
 
 func PlistPath(profile string) string {
-	home := homeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
 	return filepath.Join(home, "Library", "LaunchAgents", label(profile)+".plist")
 }
 
@@ -82,9 +76,16 @@ func GeneratePlist(binaryPath, profile, homeDir string) string {
 }
 
 func Install(binaryPath, profile string) error {
-	home := homeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
+
 	plist := GeneratePlist(binaryPath, profile, home)
 	path := PlistPath(profile)
+	if path == "" {
+		return fmt.Errorf("cannot determine LaunchAgent path")
+	}
 
 	laDir := filepath.Dir(path)
 	if err := os.MkdirAll(laDir, 0o755); err != nil {
@@ -104,6 +105,9 @@ func Install(binaryPath, profile string) error {
 
 func Uninstall(profile string) error {
 	path := PlistPath(profile)
+	if path == "" {
+		return fmt.Errorf("cannot determine LaunchAgent path")
+	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return fmt.Errorf("LaunchAgent not installed")
@@ -121,7 +125,11 @@ func Uninstall(profile string) error {
 }
 
 func IsInstalled(profile string) bool {
-	_, err := os.Stat(PlistPath(profile))
+	path := PlistPath(profile)
+	if path == "" {
+		return false
+	}
+	_, err := os.Stat(path)
 	return err == nil
 }
 

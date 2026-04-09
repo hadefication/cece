@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/hadefication/cece/internal/config"
+	"github.com/hadefication/cece/internal/history"
 	"github.com/hadefication/cece/internal/session"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +17,7 @@ var (
 	yes            bool
 	chrome         bool
 	permissionMode string
+	initialPrompt  string
 )
 
 var rootCmd = &cobra.Command{
@@ -35,9 +38,10 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts")
 	rootCmd.PersistentFlags().BoolVar(&chrome, "chrome", false, "enable Chrome browser automation")
 	rootCmd.PersistentFlags().StringVar(&permissionMode, "permission-mode", "auto", "permission mode: auto, default, plan, yolo (bypass permissions)")
+	rootCmd.PersistentFlags().StringVar(&initialPrompt, "prompt", "", "initial prompt to send after session starts")
 }
 
-func resolvePermissionMode(mode string) string {
+func resolvePermissionMode(mode string) (string, error) {
 	valid := map[string]string{
 		"auto":    "auto",
 		"default": "default",
@@ -46,10 +50,9 @@ func resolvePermissionMode(mode string) string {
 	}
 	resolved, ok := valid[mode]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "Error: invalid permission mode %q. Valid modes: auto, default, plan, yolo\n", mode)
-		os.Exit(1)
+		return "", fmt.Errorf("invalid permission mode %q; valid modes: auto, default, plan, yolo", mode)
 	}
-	return resolved
+	return resolved, nil
 }
 
 func checkClaude() error {
@@ -92,19 +95,37 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	}
 	sessionName := session.GenerateName(username, machine, profile, dir, home)
 
-	claudeArgs := []string{"--name", sessionName, "--permission-mode", resolvePermissionMode(permissionMode)}
+	pm, err := resolvePermissionMode(permissionMode)
+	if err != nil {
+		return err
+	}
+
+	claudeArgs := []string{"--name", sessionName, "--permission-mode", pm}
 	if chrome {
 		claudeArgs = append(claudeArgs, "--chrome")
 	}
+	if initialPrompt != "" {
+		claudeArgs = append(claudeArgs, "--prompt", initialPrompt)
+	}
 
-	if profileDir != "" {
-		os.Setenv("CLAUDE_CONFIG_DIR", profileDir)
+	if err := history.Log(history.Entry{
+		Session:   sessionName,
+		Type:      "interactive",
+		Action:    "start",
+		Dir:       dir,
+		Profile:   profile,
+		Timestamp: time.Now(),
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
 	}
 
 	claudeCmd := exec.Command("claude", claudeArgs...)
 	claudeCmd.Stdin = os.Stdin
 	claudeCmd.Stdout = os.Stdout
 	claudeCmd.Stderr = os.Stderr
+	if profileDir != "" {
+		claudeCmd.Env = append(os.Environ(), "CLAUDE_CONFIG_DIR="+profileDir)
+	}
 
 	return claudeCmd.Run()
 }

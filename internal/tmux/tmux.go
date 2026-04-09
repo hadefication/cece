@@ -42,13 +42,17 @@ func KillSession(session string) error {
 }
 
 
-func ListSessions(prefix string) []SessionInfo {
+func ListSessions(prefix string) ([]SessionInfo, error) {
 	out, err := exec.Command("tmux", "list-sessions", "-F", "#{session_name} #{session_created}").Output()
 	if err != nil {
-		return []SessionInfo{}
+		// Exit code 1 = no tmux server running (no sessions)
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("listing tmux sessions: %w", err)
 	}
 
-	sessions := []SessionInfo{}
+	var sessions []SessionInfo
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 		if line == "" {
 			continue
@@ -67,7 +71,7 @@ func ListSessions(prefix string) []SessionInfo {
 		}
 		sessions = append(sessions, SessionInfo{Name: name, Created: created})
 	}
-	return sessions
+	return sessions, nil
 }
 
 func GetPanePID(session string) string {

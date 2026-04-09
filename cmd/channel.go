@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hadefication/cece/internal/config"
+	"github.com/hadefication/cece/internal/history"
 	"github.com/hadefication/cece/internal/session"
 	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
@@ -74,7 +75,12 @@ func runChannel(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(1 * time.Second)
 
-	claudeCommand := fmt.Sprintf("claude --channels '%s' --enable-auto-mode --permission-mode %s", tmux.ShellEscape(ch.Plugin), resolvePermissionMode(permissionMode))
+	pm, err := resolvePermissionMode(permissionMode)
+	if err != nil {
+		return err
+	}
+
+	claudeCommand := fmt.Sprintf("claude --channels '%s' --enable-auto-mode --permission-mode %s", tmux.ShellEscape(ch.Plugin), pm)
 	if chrome {
 		claudeCommand += " --chrome"
 	}
@@ -87,7 +93,24 @@ func runChannel(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("sending claude command: %w", err)
 	}
 
+	if err := history.Log(history.Entry{
+		Session:   tmuxSession,
+		Type:      "channel",
+		Action:    "start",
+		Profile:   profile,
+		Timestamp: time.Now(),
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
+	}
+
 	time.Sleep(1 * time.Second)
+
+	if initialPrompt != "" {
+		time.Sleep(2 * time.Second)
+		if err := tmux.SendKeys(tmuxSession, initialPrompt); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not send initial prompt: %v\n", err)
+		}
+	}
 
 	attachCmd := exec.Command("tmux", "attach-session", "-t", tmuxSession)
 	attachCmd.Stdin = os.Stdin

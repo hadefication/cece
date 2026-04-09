@@ -25,8 +25,9 @@ func init() {
 	autostartCmd.AddCommand(autostartRunCmd)
 }
 
-// Note: autostart always uses default permission-mode (auto) and no --chrome.
-// These are not configurable via the LaunchAgent plist.
+// Note: when called from the LaunchAgent/systemd service, --permission-mode
+// and --chrome flags are at their defaults (auto, false) since the service
+// file does not pass them.
 func runAutostartRun(cmd *cobra.Command, args []string) error {
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	logger.Println("Autostart script started")
@@ -83,7 +84,12 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(2 * time.Second)
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(sessionName), resolvePermissionMode(permissionMode))
+	pm, err := resolvePermissionMode(permissionMode)
+	if err != nil {
+		return err
+	}
+
+	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(sessionName), pm)
 	if chrome {
 		claudeCmd += " --chrome"
 	}

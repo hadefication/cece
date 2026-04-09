@@ -21,20 +21,21 @@ type Channel struct {
 	Plugin string `yaml:"plugin"`
 }
 
-// Config is the top-level cece configuration.
-type Config struct {
-	Machine  string             `yaml:"machine"`
-	Profiles map[string]Profile `yaml:"profiles"`
-	Channels map[string]Channel `yaml:"channels"`
+// Template holds a named session configuration.
+type Template struct {
+	Dir            string `yaml:"dir"`
+	Profile        string `yaml:"profile,omitempty"`
+	PermissionMode string `yaml:"permission_mode,omitempty"`
+	Prompt         string `yaml:"prompt,omitempty"`
+	Chrome         bool   `yaml:"chrome,omitempty"`
 }
 
-func homeDir() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "fatal: cannot determine home directory: %v\n", err)
-		os.Exit(1)
-	}
-	return home
+// Config is the top-level cece configuration.
+type Config struct {
+	Machine   string               `yaml:"machine"`
+	Profiles  map[string]Profile   `yaml:"profiles"`
+	Channels  map[string]Channel   `yaml:"channels"`
+	Templates map[string]Template  `yaml:"templates,omitempty"`
 }
 
 // ValidateProfileDir checks that a resolved profile directory is within the
@@ -64,7 +65,11 @@ func Dir() string {
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
 		return filepath.Join(xdg, "cece")
 	}
-	home := homeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		// Fallback to current directory — caller will get a permission or path error
+		return ".cece"
+	}
 	return filepath.Join(home, ".config", "cece")
 }
 
@@ -83,8 +88,9 @@ func Exists() bool {
 // an empty, initialised Config (not an error).
 func Load() (*Config, error) {
 	cfg := &Config{
-		Profiles: make(map[string]Profile),
-		Channels: make(map[string]Channel),
+		Profiles:  make(map[string]Profile),
+		Channels:  make(map[string]Channel),
+		Templates: make(map[string]Template),
 	}
 
 	data, err := os.ReadFile(FilePath())
@@ -106,6 +112,9 @@ func Load() (*Config, error) {
 	if cfg.Channels == nil {
 		cfg.Channels = make(map[string]Channel)
 	}
+	if cfg.Templates == nil {
+		cfg.Templates = make(map[string]Template)
+	}
 
 	return cfg, nil
 }
@@ -126,11 +135,15 @@ func (c *Config) Save() error {
 }
 
 // ExpandHome expands a leading "~/" to the current user's home directory.
+// Returns the path unchanged if home directory cannot be determined.
 func ExpandHome(path string) string {
 	if !strings.HasPrefix(path, "~/") {
 		return path
 	}
-	home := homeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return path
+	}
 	return filepath.Join(home, path[2:])
 }
 
@@ -139,7 +152,10 @@ func ExpandHome(path string) string {
 // A named profile must exist in the config; otherwise an error is returned.
 func (c *Config) ResolveProfileDir(name string) (string, error) {
 	if name == "" {
-		home := homeDir()
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("cannot determine home directory: %w", err)
+		}
 		return filepath.Join(home, ".claude"), nil
 	}
 

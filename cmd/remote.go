@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hadefication/cece/internal/config"
+	"github.com/hadefication/cece/internal/history"
 	"github.com/hadefication/cece/internal/session"
 	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
@@ -81,7 +82,12 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(1 * time.Second)
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(claudeName), resolvePermissionMode(permissionMode))
+	pm, err := resolvePermissionMode(permissionMode)
+	if err != nil {
+		return err
+	}
+
+	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(claudeName), pm)
 	if chrome {
 		claudeCmd += " --chrome"
 	}
@@ -99,6 +105,17 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to start session")
 	}
 
+	if err := history.Log(history.Entry{
+		Session:   tmuxSession,
+		Type:      "remote",
+		Action:    "start",
+		Dir:       projectDir,
+		Profile:   profile,
+		Timestamp: time.Now(),
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
+	}
+
 	fmt.Println("Remote control session started.")
 	fmt.Printf("  tmux session:  %s\n", tmuxSession)
 	fmt.Printf("  Claude name:   %s\n", claudeName)
@@ -106,6 +123,15 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	fmt.Println("Connect from claude.ai/code.")
 	fmt.Printf("Stop with:   cece remote stop %s\n", dirName)
+
+	if initialPrompt != "" {
+		time.Sleep(2 * time.Second)
+		if err := tmux.SendKeys(tmuxSession, initialPrompt); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not send initial prompt: %v\n", err)
+		} else {
+			fmt.Printf("  Sent prompt: %s\n", initialPrompt)
+		}
+	}
 
 	if err := tmux.OpenTerminalAttached(tmuxSession); err != nil {
 		fmt.Printf("Could not open Terminal.app. Attach manually with: tmux attach -t %s\n", tmuxSession)

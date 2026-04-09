@@ -30,8 +30,11 @@ func TestListSessions_Prefix(t *testing.T) {
 	if !hasTmux() {
 		t.Skip("tmux not installed")
 	}
-	sessions := ListSessions("cece-test-nonexistent-")
-	if sessions == nil {
-		t.Error("expected empty slice, not nil")
+	sessions, err := ListSessions("cece-test-nonexistent-")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if len(sessions) != 0 {
+		t.Errorf("expected empty slice, got %d sessions", len(sessions))
 	}
 }

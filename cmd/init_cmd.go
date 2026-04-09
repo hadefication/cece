@@ -28,9 +28,10 @@ func runInit(cmd *cobra.Command, args []string) error {
 	machine := session.DetectMachine()
 
 	cfg := &config.Config{
-		Machine:  machine,
-		Profiles: make(map[string]config.Profile),
-		Channels: make(map[string]config.Channel),
+		Machine:   machine,
+		Profiles:  make(map[string]config.Profile),
+		Channels:  make(map[string]config.Channel),
+		Templates: make(map[string]config.Template),
 	}
 
 	if err := os.MkdirAll(config.Dir(), 0o755); err != nil {

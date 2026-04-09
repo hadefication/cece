@@ -2,6 +2,7 @@ package process
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -18,12 +19,16 @@ func KillTree(pid string) error {
 		children = strings.Fields(strings.TrimSpace(string(out)))
 	}
 
-	// SIGTERM phase
+	// SIGTERM phase — log permission errors as they indicate SIGKILL will also fail
 	for _, child := range children {
 		exec.Command("pkill", "-TERM", "-P", child).Run()
-		exec.Command("kill", "-TERM", child).Run()
+		if err := exec.Command("kill", "-TERM", child).Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: SIGTERM failed for pid %s: %v\n", child, err)
+		}
 	}
-	exec.Command("kill", "-TERM", pid).Run()
+	if err := exec.Command("kill", "-TERM", pid).Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: SIGTERM failed for pid %s: %v\n", pid, err)
+	}
 
 	time.Sleep(1 * time.Second)
 

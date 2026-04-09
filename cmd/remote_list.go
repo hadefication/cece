@@ -22,7 +22,10 @@ func runRemoteList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	sessions := tmux.ListSessions("cece-remote-")
+	sessions, err := tmux.ListSessions("cece-remote-")
+	if err != nil {
+		return err
+	}
 	if len(sessions) == 0 {
 		fmt.Println("No remote control sessions running.")
 		return nil

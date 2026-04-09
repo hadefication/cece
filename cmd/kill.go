@@ -29,7 +29,10 @@ func runKill(cmd *cobra.Command, args []string) error {
 
 	// No args — stop all cece sessions
 	if len(args) == 0 {
-		sessions := tmux.ListSessions("cece-")
+		sessions, err := tmux.ListSessions("cece-")
+		if err != nil {
+			return err
+		}
 		if len(sessions) == 0 {
 			fmt.Println("No sessions running.")
 			return nil
@@ -87,7 +90,10 @@ func runKill(cmd *cobra.Command, args []string) error {
 	}
 
 	// Fuzzy search
-	allSessions := tmux.ListSessions("cece-")
+	allSessions, err := tmux.ListSessions("cece-")
+	if err != nil {
+		return err
+	}
 	var matches []string
 	for _, s := range allSessions {
 		if strings.Contains(s.Name, name) {
