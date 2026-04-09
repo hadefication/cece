@@ -82,6 +82,9 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	time.Sleep(1 * time.Second)
 
 	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode auto", claudeName)
+	if chrome {
+		claudeCmd += " --chrome"
+	}
 	if profileDir != "" {
 		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", profileDir, claudeCmd)
 	}
