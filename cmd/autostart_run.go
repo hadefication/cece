@@ -78,7 +78,7 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(2 * time.Second)
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode auto", sessionName)
+	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", sessionName, resolvePermissionMode(permissionMode))
 	if profileDir != "" {
 		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", profileDir, claudeCmd)
 	}

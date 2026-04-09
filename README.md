@@ -32,6 +32,32 @@ cece                               # start a Claude session
 cece list                          # show commands and sessions
 ```
 
+## Global Flags
+
+These flags work on any command:
+
+| Flag | Short | Description |
+|---|---|---|
+| `--profile` | `-p` | Use a named profile |
+| `--chrome` | | Enable Chrome browser automation |
+| `--permission-mode` | | Set permission mode (default: `auto`) |
+| `--yes` | `-y` | Skip confirmation prompts |
+
+### Permission Modes
+
+| Mode | Description |
+|---|---|
+| `auto` | Automatically approve safe actions (default) |
+| `default` | Prompt for every action |
+| `plan` | Plan mode — review before executing |
+| `yolo` | Bypass all permission checks (maps to `bypassPermissions` in Claude Code) |
+
+```bash
+cece --permission-mode plan        # start in plan mode
+cece --chrome                      # enable Chrome automation
+cece --permission-mode yolo        # live dangerously
+```
+
 ## Profiles
 
 Profiles let you use multiple Claude Code accounts on the same machine. Each profile gets its own config directory with separate credentials, settings, and CLAUDE.md.

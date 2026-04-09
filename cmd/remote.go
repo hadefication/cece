@@ -81,7 +81,7 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(1 * time.Second)
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode auto", claudeName)
+	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", claudeName, resolvePermissionMode(permissionMode))
 	if chrome {
 		claudeCmd += " --chrome"
 	}

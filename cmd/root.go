@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	profile string
-	yes     bool
-	chrome  bool
+	profile        string
+	yes            bool
+	chrome         bool
+	permissionMode string
 )
 
 var rootCmd = &cobra.Command{
@@ -33,6 +34,14 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&profile, "profile", "p", "", "use a named profile")
 	rootCmd.PersistentFlags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts")
 	rootCmd.PersistentFlags().BoolVar(&chrome, "chrome", false, "enable Chrome browser automation")
+	rootCmd.PersistentFlags().StringVar(&permissionMode, "permission-mode", "auto", "permission mode: auto, default, plan, yolo (bypass permissions)")
+}
+
+func resolvePermissionMode(mode string) string {
+	if mode == "yolo" {
+		return "bypassPermissions"
+	}
+	return mode
 }
 
 func checkClaude() error {
@@ -75,7 +84,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	}
 	sessionName := session.GenerateName(username, machine, profile, dir, home)
 
-	claudeArgs := []string{"--name", sessionName, "--permission-mode", "auto"}
+	claudeArgs := []string{"--name", sessionName, "--permission-mode", resolvePermissionMode(permissionMode)}
 	if chrome {
 		claudeArgs = append(claudeArgs, "--chrome")
 	}
