@@ -1,6 +1,6 @@
 package main
 
-import "github.com/inggo/cece/cmd"
+import "github.com/hadefication/cece/cmd"
 
 func main() {
 	cmd.Execute()

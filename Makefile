@@ -1,6 +1,6 @@
 BINARY=cc
 VERSION?=dev
-LDFLAGS=-ldflags "-X github.com/inggo/cece/cmd.version=$(VERSION)"
+LDFLAGS=-ldflags "-X github.com/hadefication/cece/cmd.version=$(VERSION)"
 
 .PHONY: build install test clean
 

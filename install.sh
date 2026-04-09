@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
 # Install cece (cc) — Claude Code session manager
-# Usage: curl -sSL https://raw.githubusercontent.com/inggo/cece/main/install.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/hadefication/cece/main/install.sh | bash
 #
 
 set -euo pipefail
 
-REPO="inggo/cece"
+REPO="hadefication/cece"
 BINARY="cc"
 INSTALL_DIR="${HOME}/.local/bin"
 

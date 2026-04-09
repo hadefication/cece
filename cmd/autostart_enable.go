@@ -5,7 +5,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/inggo/cece/internal/launchagent"
+	"github.com/hadefication/cece/internal/launchagent"
 	"github.com/spf13/cobra"
 )
 

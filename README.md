@@ -5,13 +5,13 @@ Claude Code session manager. One CLI to manage sessions, profiles, channels, and
 ## Install
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/inggo/cece/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/hadefication/cece/main/install.sh | bash
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/inggo/cece.git
+git clone https://github.com/hadefication/cece.git
 cd cece
 make install
 ```

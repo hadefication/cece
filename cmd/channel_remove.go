@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/inggo/cece/internal/config"
-	"github.com/inggo/cece/internal/session"
-	"github.com/inggo/cece/internal/tmux"
+	"github.com/hadefication/cece/internal/config"
+	"github.com/hadefication/cece/internal/session"
+	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
 

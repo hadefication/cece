@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/inggo/cece/internal/config"
+	"github.com/hadefication/cece/internal/config"
 	"github.com/spf13/cobra"
 )
 
