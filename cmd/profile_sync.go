@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/inggo/cece/internal/config"
+	"github.com/hadefication/cece/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -88,7 +88,7 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			dst := filepath.Join(profileDir, file)
-			if err := os.WriteFile(dst, data, 0o644); err != nil {
+			if err := os.WriteFile(dst, data, 0o600); err != nil {
 				fmt.Printf("  %s: error writing %s: %v\n", name, file, err)
 				continue
 			}

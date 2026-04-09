@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,13 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Current: %s\n", version)
 	fmt.Println("Checking for updates...")
 
-	resp, err := http.Get("https://api.github.com/repos/inggo/cece/releases/latest")
+	client := &http.Client{Timeout: 30 * time.Second}
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/hadefication/cece/releases/latest", nil)
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+	req.Header.Set("User-Agent", "cece/"+version)
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("checking for updates: %w", err)
 	}
@@ -55,7 +62,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Updating to %s...\n", release.TagName)
 
 	installCmd := exec.Command("bash", "-c",
-		"curl -sSL https://raw.githubusercontent.com/inggo/cece/main/install.sh | bash")
+		"curl -sSL https://raw.githubusercontent.com/hadefication/cece/main/install.sh | bash")
 	installCmd.Stdout = os.Stdout
 	installCmd.Stderr = os.Stderr
 

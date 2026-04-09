@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/inggo/cece/internal/config"
+	"github.com/hadefication/cece/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +22,10 @@ func init() {
 
 func runProfileAdd(cmd *cobra.Command, args []string) error {
 	name := args[0]
+
+	if err := config.ValidateName(name); err != nil {
+		return fmt.Errorf("invalid profile name: %w", err)
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -47,7 +51,7 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		dst := filepath.Join(configDir, file)
-		if err := os.WriteFile(dst, data, 0o644); err != nil {
+		if err := os.WriteFile(dst, data, 0o600); err != nil {
 			fmt.Printf("Warning: could not copy %s: %v\n", file, err)
 		}
 	}

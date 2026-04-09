@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/inggo/cece/internal/config"
-	"github.com/inggo/cece/internal/session"
-	"github.com/inggo/cece/internal/tmux"
+	"github.com/hadefication/cece/internal/config"
+	"github.com/hadefication/cece/internal/session"
+	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +46,10 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	if len(channelSessions) > 0 {
 		fmt.Println("CHANNEL SESSIONS")
-		cfg, _ := config.Load()
+		cfg, err := config.Load()
+		if err != nil {
+			return fmt.Errorf("loading config: %w", err)
+		}
 		fmt.Printf("%-20s %-10s %s\n", "NAME", "STATUS", "TMUX SESSION")
 		for name := range cfg.Channels {
 			tmuxName := session.TmuxChannelName(profile, name)

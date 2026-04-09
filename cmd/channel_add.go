@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/inggo/cece/internal/config"
+	"github.com/hadefication/cece/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +26,10 @@ func init() {
 
 func runChannelAdd(cmd *cobra.Command, args []string) error {
 	name := args[0]
+
+	if err := config.ValidateName(name); err != nil {
+		return fmt.Errorf("invalid channel name: %w", err)
+	}
 
 	cfg, err := config.Load()
 	if err != nil {

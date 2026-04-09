@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/inggo/cece/internal/config"
-	"github.com/inggo/cece/internal/session"
-	"github.com/inggo/cece/internal/tmux"
+	"github.com/hadefication/cece/internal/config"
+	"github.com/hadefication/cece/internal/session"
+	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
@@ -97,7 +97,9 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	fmt.Println("Connect from claude.ai/code.")
 	fmt.Printf("Stop with:   cc remote stop %s\n", dirName)
 
-	tmux.OpenTerminalAttached(tmuxSession)
+	if err := tmux.OpenTerminalAttached(tmuxSession); err != nil {
+		fmt.Printf("Could not open Terminal.app. Attach manually with: tmux attach -t %s\n", tmuxSession)
+	}
 
 	return nil
 }

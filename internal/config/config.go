@@ -90,7 +90,7 @@ func (c *Config) Save() error {
 		return err
 	}
 
-	return os.WriteFile(FilePath(), data, 0o644)
+	return os.WriteFile(FilePath(), data, 0o600)
 }
 
 // ExpandHome expands a leading "~/" to the current user's home directory.
