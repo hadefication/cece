@@ -24,6 +24,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	fmt.Println("Available commands:")
 	fmt.Println("  attach                  Attach to a session")
+	fmt.Println("  kill [name]             Stop session(s)")
 	fmt.Println("  init                    Initialize configuration")
 	fmt.Println("  list                    List commands and sessions")
 	fmt.Println("  update                  Self-update to latest version")

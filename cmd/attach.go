@@ -29,7 +29,7 @@ func runAttach(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		target := "cece-default"
 		if !tmux.SessionExists(target) {
-			return fmt.Errorf("no default session running. Start one with: cc")
+			return fmt.Errorf("no default session running. Start one with: cece")
 		}
 		return attachToSession(target)
 	}

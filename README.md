@@ -169,6 +169,16 @@ cece attach imessage               # attach to channel session
 
 The attach command is smart — it searches across remote and channel sessions. If multiple sessions match, it lists them for you to pick.
 
+### Kill sessions
+
+```bash
+cece kill myproject                # stop a specific session (smart name resolution)
+cece kill imessage                 # stop a channel session
+cece kill                          # stop all sessions
+```
+
+Like attach, the kill command resolves names across all session types — remote, channel, and default.
+
 ## Configuration
 
 ### Location
