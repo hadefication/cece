@@ -36,8 +36,11 @@ func killSession(sessionName string) error {
 			fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
 		}
 	}
-	if err := tmux.KillSession(sessionName); err != nil {
-		return fmt.Errorf("could not kill tmux session %q: %w", sessionName, err)
+	// Session may already be gone if the process exit caused tmux to close it
+	if tmux.SessionExists(sessionName) {
+		if err := tmux.KillSession(sessionName); err != nil {
+			return fmt.Errorf("could not kill tmux session %q: %w", sessionName, err)
+		}
 	}
 	if err := history.Log(history.Entry{
 		Session:   sessionName,
