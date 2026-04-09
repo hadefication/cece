@@ -89,12 +89,9 @@ func ShellEscape(s string) string {
 }
 
 func OpenTerminalAttached(session string) error {
-	escaped := strings.ReplaceAll(session, `\`, `\\`)
-	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
-	escaped = strings.ReplaceAll(escaped, "`", "")
 	script := fmt.Sprintf(`tell application "Terminal"
-		do script "tmux attach -t %s"
+		do script "tmux attach -t '%s'"
 		activate
-	end tell`, escaped)
+	end tell`, ShellEscape(session))
 	return exec.Command("osascript", "-e", script).Run()
 }

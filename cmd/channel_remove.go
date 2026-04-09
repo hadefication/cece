@@ -26,6 +26,10 @@ func init() {
 func runChannelRemove(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
+	if err := config.ValidateName(name); err != nil {
+		return fmt.Errorf("invalid channel name: %w", err)
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err
@@ -47,7 +51,9 @@ func runChannelRemove(cmd *cobra.Command, args []string) error {
 				return nil
 			}
 		}
-		killSession(tmuxName)
+		if err := killSession(tmuxName); err != nil {
+			return err
+		}
 	}
 
 	delete(cfg.Channels, name)

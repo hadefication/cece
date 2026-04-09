@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hadefication/cece/internal/config"
@@ -34,9 +35,17 @@ func runKill(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
+		var failed []string
 		for _, s := range sessions {
-			killSession(s.Name)
-			fmt.Printf("Stopped %s\n", s.Name)
+			if err := killSession(s.Name); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to stop %s: %v\n", s.Name, err)
+				failed = append(failed, s.Name)
+			} else {
+				fmt.Printf("Stopped %s\n", s.Name)
+			}
+		}
+		if len(failed) > 0 {
+			return fmt.Errorf("failed to stop %d session(s)", len(failed))
 		}
 		fmt.Println("All sessions stopped.")
 		return nil
@@ -50,7 +59,9 @@ func runKill(cmd *cobra.Command, args []string) error {
 
 	// Try exact match
 	if tmux.SessionExists(name) {
-		killSession(name)
+		if err := killSession(name); err != nil {
+			return err
+		}
 		fmt.Printf("Stopped %s\n", name)
 		return nil
 	}
@@ -58,7 +69,9 @@ func runKill(cmd *cobra.Command, args []string) error {
 	// Try cece-remote-<name>
 	remoteName := "cece-remote-" + name
 	if tmux.SessionExists(remoteName) {
-		killSession(remoteName)
+		if err := killSession(remoteName); err != nil {
+			return err
+		}
 		fmt.Printf("Stopped %s\n", remoteName)
 		return nil
 	}
@@ -66,7 +79,9 @@ func runKill(cmd *cobra.Command, args []string) error {
 	// Try cece-channel-<name>
 	channelName := "cece-channel-" + name
 	if tmux.SessionExists(channelName) {
-		killSession(channelName)
+		if err := killSession(channelName); err != nil {
+			return err
+		}
 		fmt.Printf("Stopped %s\n", channelName)
 		return nil
 	}
@@ -85,7 +100,9 @@ func runKill(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(matches) == 1 {
-		killSession(matches[0])
+		if err := killSession(matches[0]); err != nil {
+			return err
+		}
 		fmt.Printf("Stopped %s\n", matches[0])
 		return nil
 	}

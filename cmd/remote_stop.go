@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hadefication/cece/internal/config"
 	"github.com/hadefication/cece/internal/process"
 	"github.com/hadefication/cece/internal/session"
 	"github.com/hadefication/cece/internal/tmux"
@@ -22,7 +23,7 @@ func init() {
 	remoteCmd.AddCommand(remoteStopCmd)
 }
 
-func killSession(sessionName string) {
+func killSession(sessionName string) error {
 	panePID := tmux.GetPanePID(sessionName)
 	tmux.SendCtrlC(sessionName)
 	time.Sleep(3 * time.Second)
@@ -32,8 +33,9 @@ func killSession(sessionName string) {
 		}
 	}
 	if err := tmux.KillSession(sessionName); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not kill tmux session: %v\n", err)
+		return fmt.Errorf("could not kill tmux session %q: %w", sessionName, err)
 	}
+	return nil
 }
 
 func runRemoteStop(cmd *cobra.Command, args []string) error {
@@ -43,12 +45,17 @@ func runRemoteStop(cmd *cobra.Command, args []string) error {
 
 	if len(args) > 0 {
 		name := args[0]
+		if err := config.ValidateName(name); err != nil {
+			return fmt.Errorf("invalid session name: %w", err)
+		}
 		tmuxSession := session.TmuxRemoteName(profile, name)
 		if !tmux.SessionExists(tmuxSession) {
 			fmt.Printf("No remote control session %q found.\n", name)
 			return nil
 		}
-		killSession(tmuxSession)
+		if err := killSession(tmuxSession); err != nil {
+			return err
+		}
 		fmt.Printf("Remote control session %q stopped.\n", name)
 		return nil
 	}
@@ -63,8 +70,15 @@ func runRemoteStop(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	var failed []string
 	for _, s := range sessions {
-		killSession(s.Name)
+		if err := killSession(s.Name); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
+			failed = append(failed, s.Name)
+		}
+	}
+	if len(failed) > 0 {
+		return fmt.Errorf("failed to stop %d session(s)", len(failed))
 	}
 	fmt.Println("All remote control sessions stopped.")
 	return nil

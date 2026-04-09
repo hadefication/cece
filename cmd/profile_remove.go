@@ -60,13 +60,13 @@ func runProfileRemove(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := os.RemoveAll(dir); err != nil {
-		return fmt.Errorf("removing profile dir: %w", err)
-	}
-
 	delete(cfg.Profiles, name)
 	if err := cfg.Save(); err != nil {
 		return err
+	}
+
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("removing profile dir: %w", err)
 	}
 
 	fmt.Printf("Profile %q removed.\n", name)

@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/hadefication/cece/internal/config"
 	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
@@ -35,6 +36,10 @@ func runAttach(cmd *cobra.Command, args []string) error {
 	}
 
 	name := args[0]
+
+	if err := config.ValidateName(name); err != nil {
+		return fmt.Errorf("invalid session name: %w", err)
+	}
 
 	if tmux.SessionExists(name) {
 		return attachToSession(name)

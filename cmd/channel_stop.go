@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/hadefication/cece/internal/config"
 	"github.com/hadefication/cece/internal/session"
 	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
@@ -22,6 +23,10 @@ func init() {
 func runChannelStop(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
+	if err := config.ValidateName(name); err != nil {
+		return fmt.Errorf("invalid channel name: %w", err)
+	}
+
 	if err := tmux.CheckInstalled(); err != nil {
 		return err
 	}
@@ -33,7 +38,9 @@ func runChannelStop(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	killSession(tmuxSession)
+	if err := killSession(tmuxSession); err != nil {
+		return err
+	}
 	fmt.Printf("Channel session %q stopped.\n", name)
 	return nil
 }

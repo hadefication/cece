@@ -90,6 +90,7 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
+		tmux.KillSession(tmuxSession)
 		return fmt.Errorf("sending claude command: %w", err)
 	}
 

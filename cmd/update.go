@@ -168,13 +168,36 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	newBinary := filepath.Join(tmpDir, "cece")
 	if err := os.Rename(newBinary, currentBinary); err != nil {
-		// Cross-device rename, fall back to copy
-		src, err := os.ReadFile(newBinary)
+		// Cross-device rename — write to a temp file in the target directory, then rename
+		targetDir := filepath.Dir(currentBinary)
+		tmpFile, err := os.CreateTemp(targetDir, "cece-update-*")
 		if err != nil {
+			return fmt.Errorf("creating temp file for update: %w", err)
+		}
+		tmpPath := tmpFile.Name()
+
+		src, err := os.Open(newBinary)
+		if err != nil {
+			tmpFile.Close()
+			os.Remove(tmpPath)
 			return fmt.Errorf("reading new binary: %w", err)
 		}
-		if err := os.WriteFile(currentBinary, src, 0o755); err != nil {
+		if _, err := io.Copy(tmpFile, src); err != nil {
+			src.Close()
+			tmpFile.Close()
+			os.Remove(tmpPath)
 			return fmt.Errorf("writing new binary: %w", err)
+		}
+		src.Close()
+		tmpFile.Close()
+
+		if err := os.Chmod(tmpPath, 0o755); err != nil {
+			os.Remove(tmpPath)
+			return fmt.Errorf("setting binary permissions: %w", err)
+		}
+		if err := os.Rename(tmpPath, currentBinary); err != nil {
+			os.Remove(tmpPath)
+			return fmt.Errorf("replacing binary: %w", err)
 		}
 	}
 

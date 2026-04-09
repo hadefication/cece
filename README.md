@@ -34,7 +34,7 @@ cece list                          # show commands and sessions
 
 ## Global Flags
 
-These flags work on any command:
+These flags are available on all commands but only take effect on commands that start a Claude session (`cece`, `remote`, `channel`, `autostart`):
 
 | Flag | Short | Description |
 |---|---|---|
@@ -151,7 +151,7 @@ cece remote                        # start for current directory
 cece remote ~/Code/myproject       # start for a specific project
 ```
 
-This creates a tmux session, starts Claude Code inside it, and opens a Terminal window attached to the session.
+This creates a tmux session and starts Claude Code inside it. On macOS, it also opens a Terminal window attached to the session. On Linux, use `cece attach` to connect.
 
 ### Managing remote sessions
 
@@ -243,7 +243,7 @@ cece generates descriptive session names for identification in [claude.ai/code](
 | Project directory | `user@machine-project-date` |
 | With profile | `user@machine-profile-project-date` |
 
-Example: `inggo@Mac-mini-work-myproject-apr092026-1030`
+Example: `john@MacBook-Pro-work-myproject-apr092026-1030`
 
 tmux sessions use the prefix `cece-` for easy identification:
 
@@ -257,25 +257,20 @@ tmux sessions use the prefix `cece-` for easy identification:
 
 ```bash
 # Zsh (add to ~/.zshrc)
-eval "$(cece completion zsh)"
+if command -v cece &>/dev/null; then
+  eval "$(cece completion zsh)"
+fi
 
 # Bash (add to ~/.bashrc)
-eval "$(cece completion bash)"
+if command -v cece &>/dev/null; then
+  eval "$(cece completion bash)"
+fi
 
 # Fish
 cece completion fish | source
 ```
 
-## Dotfiles Integration
-
-```bash
-# In your shell init file:
-if command -v cece &>/dev/null; then
-  eval "$(cece completion zsh)"
-fi
-```
-
-No aliases needed. cece replaces any Claude-related aliases and scripts.
+cece does not create shell aliases or modify your shell configuration. It won't interfere with any existing Claude Code aliases or scripts you may have.
 
 ## Non-Interactive Mode
 

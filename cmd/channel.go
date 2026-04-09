@@ -83,6 +83,7 @@ func runChannel(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCommand); err != nil {
+		tmux.KillSession(tmuxSession)
 		return fmt.Errorf("sending claude command: %w", err)
 	}
 

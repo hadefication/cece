@@ -8,6 +8,15 @@ import (
 	"strings"
 )
 
+func xmlEscape(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	s = strings.ReplaceAll(s, "'", "&apos;")
+	s = strings.ReplaceAll(s, "\"", "&quot;")
+	return s
+}
+
 func homeDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -36,14 +45,17 @@ func GeneratePlist(binaryPath, profile, homeDir string) string {
 		logPath = fmt.Sprintf("/tmp/cece-autostart-%s.log", profile)
 	}
 
+	escapedBinaryPath := xmlEscape(binaryPath)
+	escapedHomeDir := xmlEscape(homeDir)
+
 	args := fmt.Sprintf(`        <string>%s</string>
         <string>autostart</string>
-        <string>run</string>`, binaryPath)
+        <string>run</string>`, escapedBinaryPath)
 
 	if profile != "" {
 		args += fmt.Sprintf(`
         <string>--profile</string>
-        <string>%s</string>`, profile)
+        <string>%s</string>`, xmlEscape(profile))
 	}
 
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
@@ -66,7 +78,7 @@ func GeneratePlist(binaryPath, profile, homeDir string) string {
     <string>%s</string>
 </dict>
 </plist>
-`, lbl, args, homeDir, logPath, logPath)
+`, lbl, args, escapedHomeDir, logPath, logPath)
 }
 
 func Install(binaryPath, profile string) error {

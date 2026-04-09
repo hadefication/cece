@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/hadefication/cece/internal/config"
@@ -91,6 +92,7 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
+		tmux.KillSession(tmuxSession)
 		return fmt.Errorf("sending claude command: %w", err)
 	}
 	logger.Printf("Sent claude command (name: %s)", sessionName)
@@ -98,7 +100,7 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 	maxWait := 120
 	elapsed := 0
 	for elapsed < maxWait {
-		out, err := exec.Command("pgrep", "-f", "claude.*"+sessionName).Output()
+		out, err := exec.Command("pgrep", "-f", "claude.*"+regexp.QuoteMeta(sessionName)).Output()
 		if err == nil && len(out) > 0 {
 			logger.Printf("Claude process detected after %ds", elapsed)
 			break
