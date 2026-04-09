@@ -63,8 +63,14 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		machine = session.DetectMachine()
 	}
 	username := session.CurrentUser()
-	dir, _ := os.Getwd()
-	home, _ := os.UserHomeDir()
+	dir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
 	sessionName := session.GenerateName(username, machine, profile, dir, home)
 
 	claudeArgs := []string{"--name", sessionName, "--permission-mode", "auto"}

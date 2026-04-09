@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/hadefication/cece/internal/process"
@@ -26,7 +27,9 @@ func killSession(sessionName string) {
 	tmux.SendCtrlC(sessionName)
 	time.Sleep(3 * time.Second)
 	if panePID != "" {
-		process.KillTree(panePID)
+		if err := process.KillTree(panePID); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
+		}
 	}
 	tmux.KillSession(sessionName)
 }

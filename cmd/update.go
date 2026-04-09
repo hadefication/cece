@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -46,8 +50,9 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("GitHub API returned %d (no releases yet?)", resp.StatusCode)
 	}
 
+	body := io.LimitReader(resp.Body, 1<<20) // 1 MB limit
 	var release githubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+	if err := json.NewDecoder(body).Decode(&release); err != nil {
 		return fmt.Errorf("parsing release info: %w", err)
 	}
 
@@ -61,13 +66,116 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Updating to %s...\n", release.TagName)
 
-	installCmd := exec.Command("bash", "-c",
-		"curl -sSL https://raw.githubusercontent.com/hadefication/cece/main/install.sh | bash")
-	installCmd.Stdout = os.Stdout
-	installCmd.Stderr = os.Stderr
+	// Download binary directly
+	goos := runtime.GOOS
+	goarch := runtime.GOARCH
+	tarName := fmt.Sprintf("cece_%s_%s_%s.tar.gz", latest, goos, goarch)
+	tarURL := fmt.Sprintf("https://github.com/hadefication/cece/releases/download/%s/%s", release.TagName, tarName)
 
-	if err := installCmd.Run(); err != nil {
-		return fmt.Errorf("update failed: %w", err)
+	// Download checksum file
+	checksumURL := fmt.Sprintf("https://github.com/hadefication/cece/releases/download/%s/checksums.txt", release.TagName)
+	checksumReq, err := http.NewRequest("GET", checksumURL, nil)
+	if err != nil {
+		return fmt.Errorf("creating checksum request: %w", err)
+	}
+	checksumReq.Header.Set("User-Agent", "cece/"+version)
+	checksumResp, err := client.Do(checksumReq)
+	if err != nil {
+		return fmt.Errorf("downloading checksums: %w", err)
+	}
+	defer checksumResp.Body.Close()
+
+	if checksumResp.StatusCode != 200 {
+		return fmt.Errorf("could not download checksums (HTTP %d)", checksumResp.StatusCode)
+	}
+
+	checksumBody, err := io.ReadAll(io.LimitReader(checksumResp.Body, 1<<20))
+	if err != nil {
+		return fmt.Errorf("reading checksums: %w", err)
+	}
+
+	// Find expected checksum for our archive
+	var expectedChecksum string
+	for _, line := range strings.Split(string(checksumBody), "\n") {
+		if strings.Contains(line, tarName) {
+			parts := strings.Fields(line)
+			if len(parts) >= 1 {
+				expectedChecksum = parts[0]
+			}
+			break
+		}
+	}
+	if expectedChecksum == "" {
+		return fmt.Errorf("no checksum found for %s", tarName)
+	}
+
+	// Download the archive
+	tmpDir, err := os.MkdirTemp("", "cece-update-*")
+	if err != nil {
+		return fmt.Errorf("creating temp dir: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	tarPath := filepath.Join(tmpDir, tarName)
+	tarReq, err := http.NewRequest("GET", tarURL, nil)
+	if err != nil {
+		return fmt.Errorf("creating download request: %w", err)
+	}
+	tarReq.Header.Set("User-Agent", "cece/"+version)
+	tarResp, err := client.Do(tarReq)
+	if err != nil {
+		return fmt.Errorf("downloading binary: %w", err)
+	}
+	defer tarResp.Body.Close()
+
+	if tarResp.StatusCode != 200 {
+		return fmt.Errorf("could not download binary (HTTP %d)", tarResp.StatusCode)
+	}
+
+	tarFile, err := os.Create(tarPath)
+	if err != nil {
+		return fmt.Errorf("creating temp file: %w", err)
+	}
+
+	hasher := sha256.New()
+	if _, err := io.Copy(tarFile, io.TeeReader(io.LimitReader(tarResp.Body, 100<<20), hasher)); err != nil {
+		tarFile.Close()
+		return fmt.Errorf("downloading binary: %w", err)
+	}
+	tarFile.Close()
+
+	// Verify checksum
+	actualChecksum := fmt.Sprintf("%x", hasher.Sum(nil))
+	if actualChecksum != expectedChecksum {
+		return fmt.Errorf("checksum mismatch: expected %s, got %s", expectedChecksum, actualChecksum)
+	}
+
+	// Extract
+	extractCmd := exec.Command("tar", "-xzf", tarPath, "-C", tmpDir)
+	if err := extractCmd.Run(); err != nil {
+		return fmt.Errorf("extracting archive: %w", err)
+	}
+
+	// Find current binary path and replace
+	currentBinary, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("finding current binary: %w", err)
+	}
+	currentBinary, err = filepath.EvalSymlinks(currentBinary)
+	if err != nil {
+		return fmt.Errorf("resolving binary path: %w", err)
+	}
+
+	newBinary := filepath.Join(tmpDir, "cc")
+	if err := os.Rename(newBinary, currentBinary); err != nil {
+		// Cross-device rename, fall back to copy
+		src, err := os.ReadFile(newBinary)
+		if err != nil {
+			return fmt.Errorf("reading new binary: %w", err)
+		}
+		if err := os.WriteFile(currentBinary, src, 0o755); err != nil {
+			return fmt.Errorf("writing new binary: %w", err)
+		}
 	}
 
 	fmt.Println("Updated successfully.")

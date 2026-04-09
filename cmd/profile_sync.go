@@ -47,7 +47,10 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
 	defaultDir := filepath.Join(home, ".claude")
 
 	targets := make(map[string]config.Profile)
@@ -82,12 +85,27 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 		profileDir := config.ExpandHome(p.ConfigDir)
 		for _, file := range files {
 			src := filepath.Join(defaultDir, file)
+			// Check source is not a symlink
+			srcInfo, err := os.Lstat(src)
+			if err != nil {
+				fmt.Printf("  %s: %s not found in default, skipping\n", name, file)
+				continue
+			}
+			if srcInfo.Mode()&os.ModeSymlink != 0 {
+				fmt.Printf("  %s: skipping %s (symlink)\n", name, file)
+				continue
+			}
 			data, err := os.ReadFile(src)
 			if err != nil {
 				fmt.Printf("  %s: %s not found in default, skipping\n", name, file)
 				continue
 			}
 			dst := filepath.Join(profileDir, file)
+			// Check destination is not a symlink
+			if dstInfo, err := os.Lstat(dst); err == nil && dstInfo.Mode()&os.ModeSymlink != 0 {
+				fmt.Printf("  %s: skipping %s (destination is symlink)\n", name, file)
+				continue
+			}
 			if err := os.WriteFile(dst, data, 0o600); err != nil {
 				fmt.Printf("  %s: error writing %s: %v\n", name, file, err)
 				continue

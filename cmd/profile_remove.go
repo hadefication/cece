@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hadefication/cece/internal/config"
@@ -45,6 +46,18 @@ func runProfileRemove(cmd *cobra.Command, args []string) error {
 			fmt.Println("Cancelled.")
 			return nil
 		}
+	}
+
+	resolved, err := filepath.EvalSymlinks(dir)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("resolving profile dir: %w", err)
+	}
+	if resolved != "" {
+		dir = resolved
+	}
+	// Re-validate after symlink resolution
+	if err := config.ValidateProfileDir(dir); err != nil {
+		return err
 	}
 
 	if err := os.RemoveAll(dir); err != nil {

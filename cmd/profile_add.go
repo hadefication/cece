@@ -36,7 +36,10 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("profile %q already exists", name)
 	}
 
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
 	configDir := filepath.Join(home, ".claude-"+name)
 
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
@@ -46,11 +49,25 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 	defaultDir := filepath.Join(home, ".claude")
 	for _, file := range []string{"settings.json", "CLAUDE.md"} {
 		src := filepath.Join(defaultDir, file)
+		// Check source is not a symlink
+		srcInfo, err := os.Lstat(src)
+		if err != nil {
+			continue // file doesn't exist
+		}
+		if srcInfo.Mode()&os.ModeSymlink != 0 {
+			fmt.Printf("Warning: skipping %s (symlink)\n", file)
+			continue
+		}
 		data, err := os.ReadFile(src)
 		if err != nil {
 			continue
 		}
 		dst := filepath.Join(configDir, file)
+		// Check destination is not a symlink
+		if dstInfo, err := os.Lstat(dst); err == nil && dstInfo.Mode()&os.ModeSymlink != 0 {
+			fmt.Printf("Warning: skipping %s (destination is symlink)\n", file)
+			continue
+		}
 		if err := os.WriteFile(dst, data, 0o600); err != nil {
 			fmt.Printf("Warning: could not copy %s: %v\n", file, err)
 		}

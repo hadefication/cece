@@ -59,7 +59,10 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 		machine = session.DetectMachine()
 	}
 	username := session.CurrentUser()
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
 	sessionName := session.GenerateName(username, machine, profile, home, home)
 
 	var profileDir string
@@ -103,7 +106,9 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 
 	time.Sleep(15 * time.Second)
 
-	tmux.SendKeys(tmuxSession, "Welcome back!")
+	if err := tmux.SendKeys(tmuxSession, "Welcome back!"); err != nil {
+		logger.Printf("Warning: could not send welcome message: %v", err)
+	}
 	logger.Println("Autostart complete")
 
 	return nil

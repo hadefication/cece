@@ -8,6 +8,15 @@ import (
 	"strings"
 )
 
+func homeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fatal: cannot determine home directory: %v\n", err)
+		os.Exit(1)
+	}
+	return home
+}
+
 func label(profile string) string {
 	if profile != "" {
 		return "com.cece.autostart." + profile
@@ -16,7 +25,7 @@ func label(profile string) string {
 }
 
 func PlistPath(profile string) string {
-	home, _ := os.UserHomeDir()
+	home := homeDir()
 	return filepath.Join(home, "Library", "LaunchAgents", label(profile)+".plist")
 }
 
@@ -61,7 +70,7 @@ func GeneratePlist(binaryPath, profile, homeDir string) string {
 }
 
 func Install(binaryPath, profile string) error {
-	home, _ := os.UserHomeDir()
+	home := homeDir()
 	plist := GeneratePlist(binaryPath, profile, home)
 	path := PlistPath(profile)
 
@@ -88,7 +97,9 @@ func Uninstall(profile string) error {
 		return fmt.Errorf("LaunchAgent not installed")
 	}
 
-	exec.Command("launchctl", "unload", path).Run()
+	if err := exec.Command("launchctl", "unload", path).Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not unload LaunchAgent (may still run until reboot): %v\n", err)
+	}
 
 	if err := os.Remove(path); err != nil {
 		return fmt.Errorf("removing plist: %w", err)

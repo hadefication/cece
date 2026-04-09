@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,12 +28,43 @@ type Config struct {
 	Channels map[string]Channel `yaml:"channels"`
 }
 
+func homeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fatal: cannot determine home directory: %v\n", err)
+		os.Exit(1)
+	}
+	return home
+}
+
+// ValidateProfileDir checks that a resolved profile directory is within the
+// user's home directory to prevent path traversal attacks.
+func ValidateProfileDir(dir string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
+
+	// Resolve symlinks
+	resolved, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		// Dir might not exist yet, check parent
+		resolved = dir
+	}
+
+	if !strings.HasPrefix(resolved, home) {
+		return fmt.Errorf("profile directory %q must be within home directory %q", dir, home)
+	}
+
+	return nil
+}
+
 // Dir returns the cece config directory, respecting XDG_CONFIG_HOME.
 func Dir() string {
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
 		return filepath.Join(xdg, "cece")
 	}
-	home, _ := os.UserHomeDir()
+	home := homeDir()
 	return filepath.Join(home, ".config", "cece")
 }
 
@@ -98,7 +130,7 @@ func ExpandHome(path string) string {
 	if !strings.HasPrefix(path, "~/") {
 		return path
 	}
-	home, _ := os.UserHomeDir()
+	home := homeDir()
 	return filepath.Join(home, path[2:])
 }
 
@@ -107,7 +139,7 @@ func ExpandHome(path string) string {
 // A named profile must exist in the config; otherwise an error is returned.
 func (c *Config) ResolveProfileDir(name string) (string, error) {
 	if name == "" {
-		home, _ := os.UserHomeDir()
+		home := homeDir()
 		return filepath.Join(home, ".claude"), nil
 	}
 
@@ -116,5 +148,9 @@ func (c *Config) ResolveProfileDir(name string) (string, error) {
 		return "", errors.New("profile not found: " + name)
 	}
 
-	return ExpandHome(profile.ConfigDir), nil
+	expanded := ExpandHome(profile.ConfigDir)
+	if err := ValidateProfileDir(expanded); err != nil {
+		return "", err
+	}
+	return expanded, nil
 }

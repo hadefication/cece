@@ -36,7 +36,10 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	projectDir, _ := os.Getwd()
+	projectDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
 	if len(args) > 0 {
 		projectDir, err = filepath.Abs(args[0])
 		if err != nil {
@@ -67,7 +70,10 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		machine = session.DetectMachine()
 	}
 	username := session.CurrentUser()
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
 	claudeName := session.GenerateName(username, machine, profile, projectDir, home)
 
 	if err := tmux.NewSession(tmuxSession, projectDir); err != nil {

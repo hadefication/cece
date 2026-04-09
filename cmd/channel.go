@@ -65,7 +65,10 @@ func runChannel(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
 	if err := tmux.NewSession(tmuxSession, home); err != nil {
 		return fmt.Errorf("creating tmux session: %w", err)
 	}
