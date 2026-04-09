@@ -1,0 +1,26 @@
+version: 2
+
+builds:
+  - binary: cc
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X github.com/inggo/cece/cmd.version={{.Version}}
+
+archives:
+  - format: tar.gz
+    name_template: "cece_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: inggo
+    name: cece
