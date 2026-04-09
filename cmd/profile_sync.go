@@ -61,19 +61,21 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 		targets = cfg.Profiles
 	}
 
-	fmt.Println("Will sync from ~/.claude to:")
-	for name, p := range targets {
-		fmt.Printf("  %s (%s)\n", name, p.ConfigDir)
-	}
-	fmt.Printf("Files: %s\n", strings.Join(files, ", "))
-	fmt.Print("Proceed? (y/N) ")
+	if !yes {
+		fmt.Println("Will sync from ~/.claude to:")
+		for name, p := range targets {
+			fmt.Printf("  %s (%s)\n", name, p.ConfigDir)
+		}
+		fmt.Printf("Files: %s\n", strings.Join(files, ", "))
+		fmt.Print("Proceed? (y/N) ")
 
-	reader := bufio.NewReader(os.Stdin)
-	answer, _ := reader.ReadString('\n')
-	answer = strings.TrimSpace(strings.ToLower(answer))
-	if answer != "y" && answer != "yes" {
-		fmt.Println("Cancelled.")
-		return nil
+		reader := bufio.NewReader(os.Stdin)
+		answer, _ := reader.ReadString('\n')
+		answer = strings.TrimSpace(strings.ToLower(answer))
+		if answer != "y" && answer != "yes" {
+			fmt.Println("Cancelled.")
+			return nil
+		}
 	}
 
 	for name, p := range targets {

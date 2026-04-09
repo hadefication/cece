@@ -10,7 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var profile string
+var (
+	profile string
+	yes     bool
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "cc",
@@ -27,6 +30,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&profile, "profile", "p", "", "use a named profile")
+	rootCmd.PersistentFlags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompts")
 }
 
 func checkClaude() error {

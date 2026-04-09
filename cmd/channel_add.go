@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var channelPlugin string
+
 var channelAddCmd = &cobra.Command{
 	Use:   "add <name>",
 	Short: "Configure a new channel",
@@ -19,6 +21,7 @@ var channelAddCmd = &cobra.Command{
 
 func init() {
 	channelCmd.AddCommand(channelAddCmd)
+	channelAddCmd.Flags().StringVar(&channelPlugin, "plugin", "", "plugin identifier")
 }
 
 func runChannelAdd(cmd *cobra.Command, args []string) error {
@@ -37,10 +40,13 @@ func runChannelAdd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("channel %q already exists", name)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Plugin identifier: ")
-	plugin, _ := reader.ReadString('\n')
-	plugin = strings.TrimSpace(plugin)
+	plugin := channelPlugin
+	if plugin == "" {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Plugin identifier: ")
+		plugin, _ = reader.ReadString('\n')
+		plugin = strings.TrimSpace(plugin)
+	}
 
 	if plugin == "" {
 		return fmt.Errorf("plugin identifier cannot be empty")

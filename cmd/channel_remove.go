@@ -37,16 +37,17 @@ func runChannelRemove(cmd *cobra.Command, args []string) error {
 
 	tmuxName := session.TmuxChannelName(profile, name)
 	if tmux.SessionExists(tmuxName) {
-		fmt.Printf("Channel %q is running. Stop it first? (y/N) ", name)
-		reader := bufio.NewReader(os.Stdin)
-		answer, _ := reader.ReadString('\n')
-		answer = strings.TrimSpace(strings.ToLower(answer))
-		if answer == "y" || answer == "yes" {
-			killSession(tmuxName)
-		} else {
-			fmt.Println("Cancelled.")
-			return nil
+		if !yes {
+			fmt.Printf("Channel %q is running. Stop it first? (y/N) ", name)
+			reader := bufio.NewReader(os.Stdin)
+			answer, _ := reader.ReadString('\n')
+			answer = strings.TrimSpace(strings.ToLower(answer))
+			if answer != "y" && answer != "yes" {
+				fmt.Println("Cancelled.")
+				return nil
+			}
 		}
+		killSession(tmuxName)
 	}
 
 	delete(cfg.Channels, name)

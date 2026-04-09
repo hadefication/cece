@@ -35,15 +35,16 @@ func runProfileRemove(cmd *cobra.Command, args []string) error {
 	}
 
 	dir := config.ExpandHome(p.ConfigDir)
-	fmt.Printf("Remove profile %q? This deletes %s (y/N) ", name, dir)
 
-	reader := bufio.NewReader(os.Stdin)
-	answer, _ := reader.ReadString('\n')
-	answer = strings.TrimSpace(strings.ToLower(answer))
-
-	if answer != "y" && answer != "yes" {
-		fmt.Println("Cancelled.")
-		return nil
+	if !yes {
+		fmt.Printf("Remove profile %q? This deletes %s (y/N) ", name, dir)
+		reader := bufio.NewReader(os.Stdin)
+		answer, _ := reader.ReadString('\n')
+		answer = strings.TrimSpace(strings.ToLower(answer))
+		if answer != "y" && answer != "yes" {
+			fmt.Println("Cancelled.")
+			return nil
+		}
 	}
 
 	if err := os.RemoveAll(dir); err != nil {
