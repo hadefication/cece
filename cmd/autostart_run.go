@@ -24,6 +24,8 @@ func init() {
 	autostartCmd.AddCommand(autostartRunCmd)
 }
 
+// Note: autostart always uses default permission-mode (auto) and no --chrome.
+// These are not configurable via the LaunchAgent plist.
 func runAutostartRun(cmd *cobra.Command, args []string) error {
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	logger.Println("Autostart script started")

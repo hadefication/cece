@@ -20,7 +20,7 @@ var configShowCmd = &cobra.Command{
 		data, err := os.ReadFile(config.FilePath())
 		if err != nil {
 			if os.IsNotExist(err) {
-				return fmt.Errorf("Not initialized. Run: cece init")
+				return fmt.Errorf("not initialized. Run: cece init")
 			}
 			return err
 		}
@@ -31,7 +31,7 @@ var configShowCmd = &cobra.Command{
 
 var configPathCmd = &cobra.Command{
 	Use:   "path",
-	Short: "Print config directory path",
+	Short: "Print Claude config directory path",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {

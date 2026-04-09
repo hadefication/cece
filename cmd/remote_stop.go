@@ -31,7 +31,9 @@ func killSession(sessionName string) {
 			fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
 		}
 	}
-	tmux.KillSession(sessionName)
+	if err := tmux.KillSession(sessionName); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not kill tmux session: %v\n", err)
+	}
 }
 
 func runRemoteStop(cmd *cobra.Command, args []string) error {

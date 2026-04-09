@@ -71,13 +71,6 @@ func runKill(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Try cece-default
-	if name == "default" && tmux.SessionExists("cece-default") {
-		killSession("cece-default")
-		fmt.Println("Stopped cece-default")
-		return nil
-	}
-
 	// Fuzzy search
 	allSessions := tmux.ListSessions("cece-")
 	var matches []string

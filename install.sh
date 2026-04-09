@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Install cece (cc) — Claude Code session manager
+# Install cece — Claude Code session manager
 # Usage: curl -sSL https://raw.githubusercontent.com/hadefication/cece/main/install.sh | bash
 #
 

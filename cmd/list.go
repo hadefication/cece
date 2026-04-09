@@ -53,8 +53,16 @@ func runList(cmd *cobra.Command, args []string) error {
 	fmt.Println("  remote list             List remote sessions")
 
 	// Sessions
-	remoteSessions := tmux.ListSessions("cece-remote-")
-	channelSessions := tmux.ListSessions("cece-channel-")
+	remotePrefix := "cece-remote-"
+	if profile != "" {
+		remotePrefix = "cece-remote-" + profile + "-"
+	}
+	remoteSessions := tmux.ListSessions(remotePrefix)
+	channelPrefix := "cece-channel-"
+	if profile != "" {
+		channelPrefix = "cece-channel-" + profile + "-"
+	}
+	channelSessions := tmux.ListSessions(channelPrefix)
 	defaultExists := tmux.SessionExists("cece-default")
 
 	if len(remoteSessions) == 0 && len(channelSessions) == 0 && !defaultExists {

@@ -35,11 +35,3 @@ func TestListSessions_Prefix(t *testing.T) {
 		t.Error("expected empty slice, not nil")
 	}
 }
-
-func TestParseSessionLine(t *testing.T) {
-	line := "cece-remote-myproject: 1 windows (created Thu Apr  9 10:30:00 2026)"
-	info := ParseSessionLine(line)
-	if info.Name != "cece-remote-myproject" {
-		t.Errorf("Name = %q", info.Name)
-	}
-}

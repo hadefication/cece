@@ -52,7 +52,7 @@ func ValidateProfileDir(dir string) error {
 		resolved = dir
 	}
 
-	if !strings.HasPrefix(resolved, home) {
+	if !strings.HasPrefix(resolved, home+string(filepath.Separator)) && resolved != home {
 		return fmt.Errorf("profile directory %q must be within home directory %q", dir, home)
 	}
 

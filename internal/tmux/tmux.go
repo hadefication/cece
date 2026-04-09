@@ -70,11 +70,6 @@ func ListSessions(prefix string) []SessionInfo {
 	return sessions
 }
 
-func ParseSessionLine(line string) SessionInfo {
-	name := strings.SplitN(line, ":", 2)[0]
-	return SessionInfo{Name: name}
-}
-
 func GetPanePID(session string) string {
 	out, err := exec.Command("tmux", "list-panes", "-t", session, "-F", "#{pane_pid}").Output()
 	if err != nil {
@@ -96,6 +91,7 @@ func ShellEscape(s string) string {
 func OpenTerminalAttached(session string) error {
 	escaped := strings.ReplaceAll(session, `\`, `\\`)
 	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+	escaped = strings.ReplaceAll(escaped, "`", "")
 	script := fmt.Sprintf(`tell application "Terminal"
 		do script "tmux attach -t %s"
 		activate
