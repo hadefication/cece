@@ -63,6 +63,10 @@ func runChannelAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Channel %q configured.\n", name)
+	fmt.Println()
+	fmt.Println("Note: Make sure the channel plugin is already set up in Claude Code.")
+	fmt.Println("cece manages the session — plugin setup and authentication is handled by Claude Code.")
+	fmt.Println()
 	fmt.Printf("Start it with: cece channel %s\n", name)
 	return nil
 }
