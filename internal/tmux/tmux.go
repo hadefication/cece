@@ -41,13 +41,6 @@ func KillSession(session string) error {
 	return exec.Command("tmux", "kill-session", "-t", session).Run()
 }
 
-func AttachSession(session string) error {
-	cmd := exec.Command("tmux", "attach-session", "-t", session)
-	cmd.Stdin = nil
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	return cmd.Run()
-}
 
 func ListSessions(prefix string) []SessionInfo {
 	out, err := exec.Command("tmux", "list-sessions", "-F", "#{session_name} #{session_created}").Output()

@@ -49,7 +49,7 @@ func runList(cmd *cobra.Command, args []string) error {
 		cfg, _ := config.Load()
 		fmt.Printf("%-20s %-10s %s\n", "NAME", "STATUS", "TMUX SESSION")
 		for name := range cfg.Channels {
-			tmuxName := session.TmuxChannelName("", name)
+			tmuxName := session.TmuxChannelName(profile, name)
 			status := "stopped"
 			displayTmux := "-"
 			if tmux.SessionExists(tmuxName) {

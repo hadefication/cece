@@ -35,7 +35,7 @@ func runChannelRemove(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("channel %q not found", name)
 	}
 
-	tmuxName := session.TmuxChannelName("", name)
+	tmuxName := session.TmuxChannelName(profile, name)
 	if tmux.SessionExists(tmuxName) {
 		fmt.Printf("Channel %q is running. Stop it first? (y/N) ", name)
 		reader := bufio.NewReader(os.Stdin)

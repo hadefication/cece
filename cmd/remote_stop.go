@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/inggo/cece/internal/process"
+	"github.com/inggo/cece/internal/session"
 	"github.com/inggo/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +38,7 @@ func runRemoteStop(cmd *cobra.Command, args []string) error {
 
 	if len(args) > 0 {
 		name := args[0]
-		tmuxSession := "cece-remote-" + name
+		tmuxSession := session.TmuxRemoteName(profile, name)
 		if !tmux.SessionExists(tmuxSession) {
 			fmt.Printf("No remote control session %q found.\n", name)
 			return nil
@@ -47,7 +48,11 @@ func runRemoteStop(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	sessions := tmux.ListSessions("cece-remote-")
+	prefix := "cece-remote-"
+	if profile != "" {
+		prefix = "cece-remote-" + profile + "-"
+	}
+	sessions := tmux.ListSessions(prefix)
 	if len(sessions) == 0 {
 		fmt.Println("No remote control sessions to stop.")
 		return nil
