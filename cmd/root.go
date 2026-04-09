@@ -3,7 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
+	"github.com/inggo/cece/internal/config"
+	"github.com/inggo/cece/internal/session"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +29,50 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&profile, "profile", "p", "", "use a named profile")
 }
 
-func runRoot(cmd *cobra.Command, args []string) error {
-	fmt.Println("cc: starting claude session (not yet implemented)")
+func checkClaude() error {
+	if _, err := exec.LookPath("claude"); err != nil {
+		return fmt.Errorf("Claude Code CLI not found. Install it from: https://docs.anthropic.com/en/docs/claude-code")
+	}
 	return nil
+}
+
+func runRoot(cmd *cobra.Command, args []string) error {
+	if err := checkClaude(); err != nil {
+		return err
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	var profileDir string
+	if profile != "" {
+		profileDir, err = cfg.ResolveProfileDir(profile)
+		if err != nil {
+			return err
+		}
+	}
+
+	machine := cfg.Machine
+	if machine == "" {
+		machine = session.DetectMachine()
+	}
+	username := session.CurrentUser()
+	dir, _ := os.Getwd()
+	home, _ := os.UserHomeDir()
+	sessionName := session.GenerateName(username, machine, profile, dir, home)
+
+	claudeArgs := []string{"--name", sessionName, "--permission-mode", "auto"}
+
+	if profileDir != "" {
+		os.Setenv("CLAUDE_CONFIG_DIR", profileDir)
+	}
+
+	claudeCmd := exec.Command("claude", claudeArgs...)
+	claudeCmd.Stdin = os.Stdin
+	claudeCmd.Stdout = os.Stdout
+	claudeCmd.Stderr = os.Stderr
+
+	return claudeCmd.Run()
 }
