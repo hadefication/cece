@@ -1,4 +1,4 @@
-BINARY=cc
+BINARY=cece
 VERSION?=dev
 LDFLAGS=-ldflags "-X github.com/hadefication/cece/cmd.version=$(VERSION)"
 

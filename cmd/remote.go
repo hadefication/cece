@@ -53,7 +53,7 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	if tmux.SessionExists(tmuxSession) {
 		fmt.Printf("Session %q already exists.\n", tmuxSession)
 		fmt.Printf("Attach with: tmux attach -t %s\n", tmuxSession)
-		fmt.Printf("Stop with:   cc remote stop %s\n", dirName)
+		fmt.Printf("Stop with:   cece remote stop %s\n", dirName)
 		return nil
 	}
 
@@ -101,7 +101,7 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Project dir:   %s\n", projectDir)
 	fmt.Println()
 	fmt.Println("Connect from claude.ai/code.")
-	fmt.Printf("Stop with:   cc remote stop %s\n", dirName)
+	fmt.Printf("Stop with:   cece remote stop %s\n", dirName)
 
 	if err := tmux.OpenTerminalAttached(tmuxSession); err != nil {
 		fmt.Printf("Could not open Terminal.app. Attach manually with: tmux attach -t %s\n", tmuxSession)

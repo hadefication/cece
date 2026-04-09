@@ -7,7 +7,7 @@
 set -euo pipefail
 
 REPO="hadefication/cece"
-BINARY="cc"
+BINARY="cece"
 INSTALL_DIR="${HOME}/.local/bin"
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -54,4 +54,4 @@ if ! echo "$PATH" | tr ':' '\n' | grep -q "^${INSTALL_DIR}$"; then
 fi
 
 echo ""
-echo "Run 'cc init' to get started."
+echo "Run 'cece init' to get started."

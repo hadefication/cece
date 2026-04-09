@@ -20,7 +20,7 @@ var configShowCmd = &cobra.Command{
 		data, err := os.ReadFile(config.FilePath())
 		if err != nil {
 			if os.IsNotExist(err) {
-				return fmt.Errorf("cece is not initialized. Run: cc init")
+				return fmt.Errorf("cece is not initialized. Run: cece init")
 			}
 			return err
 		}

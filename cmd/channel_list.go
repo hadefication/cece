@@ -27,7 +27,7 @@ func runChannelList(cmd *cobra.Command, args []string) error {
 
 	if len(cfg.Channels) == 0 {
 		fmt.Println("No channels configured.")
-		fmt.Println("Add one with: cc channel add <name>")
+		fmt.Println("Add one with: cece channel add <name>")
 		return nil
 	}
 

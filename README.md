@@ -19,13 +19,13 @@ make install
 ## Quick Start
 
 ```bash
-cc init                          # initialize config
-cc                               # start a Claude session
-cc --profile work                # start with a different account
-cc remote ~/Code/myproject       # start remote control session
-cc channel imessage              # start iMessage channel
-cc list                          # show all sessions
-cc attach myproject              # attach to a session
+cece init                          # initialize config
+cece                               # start a Claude session
+cece --profile work                # start with a different account
+cece remote ~/Code/myproject       # start remote control session
+cece channel imessage              # start iMessage channel
+cece list                          # show all sessions
+cece attach myproject              # attach to a session
 ```
 
 ## Profiles
@@ -33,29 +33,29 @@ cc attach myproject              # attach to a session
 Manage multiple Claude Code accounts:
 
 ```bash
-cc profile add work              # create a profile
-cc --profile work                # use it (authenticate with /login)
-cc profile sync settings         # sync settings.json to all profiles
-cc profile list                  # list profiles
-cc profile remove work           # remove a profile
+cece profile add work              # create a profile
+cece --profile work                # use it (authenticate with /login)
+cece profile sync settings         # sync settings.json to all profiles
+cece profile list                  # list profiles
+cece profile remove work           # remove a profile
 ```
 
 ## Channels
 
 ```bash
-cc channel add imessage          # configure a channel
-cc channel imessage              # start/attach
-cc channel stop imessage         # stop
-cc channel list                  # list with status
+cece channel add imessage          # configure a channel
+cece channel imessage              # start/attach
+cece channel stop imessage         # stop
+cece channel list                  # list with status
 ```
 
 ## Remote Sessions
 
 ```bash
-cc remote ~/Code/myproject       # start in tmux with remote control
-cc remote list                   # list active sessions
-cc remote stop myproject         # stop a session
-cc remote stop                   # stop all
+cece remote ~/Code/myproject       # start in tmux with remote control
+cece remote list                   # list active sessions
+cece remote stop myproject         # stop a session
+cece remote stop                   # stop all
 ```
 
 ## Autostart
@@ -63,23 +63,23 @@ cc remote stop                   # stop all
 Start Claude Code on boot (macOS):
 
 ```bash
-cc autostart enable              # install LaunchAgent
-cc autostart status              # check status
-cc autostart disable             # remove
+cece autostart enable              # install LaunchAgent
+cece autostart status              # check status
+cece autostart disable             # remove
 ```
 
 ## Shell Completions
 
 ```bash
-eval "$(cc completion zsh)"      # add to ~/.zshrc
+eval "$(cece completion zsh)"      # add to ~/.zshrc
 ```
 
 ## Dotfiles Integration
 
 ```bash
 # In your shell init:
-if command -v cc &>/dev/null; then
-  eval "$(cc completion zsh)"
+if command -v cece &>/dev/null; then
+  eval "$(cece completion zsh)"
 fi
 ```
 

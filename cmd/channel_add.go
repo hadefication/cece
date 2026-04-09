@@ -37,7 +37,7 @@ func runChannelAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	if !config.Exists() {
-		return fmt.Errorf("cece is not initialized. Run: cc init")
+		return fmt.Errorf("cece is not initialized. Run: cece init")
 	}
 
 	if _, exists := cfg.Channels[name]; exists {
@@ -63,6 +63,6 @@ func runChannelAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Channel %q configured.\n", name)
-	fmt.Printf("Start it with: cc channel %s\n", name)
+	fmt.Printf("Start it with: cece channel %s\n", name)
 	return nil
 }

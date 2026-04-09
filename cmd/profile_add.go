@@ -82,6 +82,6 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Profile %q created at %s\n", name, configDir)
-	fmt.Printf("Run 'cc --profile %s' and use /login to authenticate.\n", name)
+	fmt.Printf("Run 'cece --profile %s' and use /login to authenticate.\n", name)
 	return nil
 }

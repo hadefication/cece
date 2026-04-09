@@ -166,7 +166,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("resolving binary path: %w", err)
 	}
 
-	newBinary := filepath.Join(tmpDir, "cc")
+	newBinary := filepath.Join(tmpDir, "cece")
 	if err := os.Rename(newBinary, currentBinary); err != nil {
 		// Cross-device rename, fall back to copy
 		src, err := os.ReadFile(newBinary)

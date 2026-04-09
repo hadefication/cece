@@ -25,7 +25,7 @@ func runProfileList(cmd *cobra.Command, args []string) error {
 
 	if len(cfg.Profiles) == 0 {
 		fmt.Println("No profiles configured.")
-		fmt.Println("Add one with: cc profile add <name>")
+		fmt.Println("Add one with: cece profile add <name>")
 		return nil
 	}
 

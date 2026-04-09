@@ -30,7 +30,7 @@ func runAutostartStatus(cmd *cobra.Command, args []string) error {
 
 	if !installed {
 		fmt.Println("Autostart: not installed")
-		fmt.Println("Enable with: cc autostart enable")
+		fmt.Println("Enable with: cece autostart enable")
 		return nil
 	}
 

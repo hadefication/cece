@@ -43,11 +43,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("cece initialized at %s\n\n", config.Dir())
 	fmt.Println("Next steps:")
-	fmt.Println("  cc profile add work          # add a profile")
-	fmt.Println("  cc channel add imessage      # configure a channel")
-	fmt.Println("  cc autostart enable          # start on boot")
+	fmt.Println("  cece profile add work          # add a profile")
+	fmt.Println("  cece channel add imessage      # configure a channel")
+	fmt.Println("  cece autostart enable          # start on boot")
 	fmt.Println()
-	fmt.Println("Run 'cc' to start a session.")
+	fmt.Println("Run 'cece' to start a session.")
 
 	return nil
 }

@@ -44,7 +44,7 @@ func runChannel(cmd *cobra.Command, args []string) error {
 
 	ch, exists := cfg.Channels[name]
 	if !exists {
-		return fmt.Errorf("channel %q not configured. Add it with: cc channel add %s", name, name)
+		return fmt.Errorf("channel %q not configured. Add it with: cece channel add %s", name, name)
 	}
 
 	tmuxSession := session.TmuxChannelName(profile, name)

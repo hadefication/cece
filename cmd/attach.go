@@ -71,7 +71,7 @@ func runAttach(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  %s\n", m)
 	}
 	fmt.Println()
-	fmt.Println("Specify the full name: cc attach <name>")
+	fmt.Println("Specify the full name: cece attach <name>")
 	return nil
 }
 
