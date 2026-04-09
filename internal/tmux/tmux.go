@@ -87,10 +87,18 @@ func GetPanePID(session string) string {
 	return ""
 }
 
+// ShellEscape escapes a string for safe use in single-quoted shell context.
+// It replaces single quotes with the standard shell escape sequence '\''
+func ShellEscape(s string) string {
+	return strings.ReplaceAll(s, "'", "'\\''")
+}
+
 func OpenTerminalAttached(session string) error {
+	escaped := strings.ReplaceAll(session, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
 	script := fmt.Sprintf(`tell application "Terminal"
-        do script "tmux attach -t %s"
-        activate
-    end tell`, session)
+		do script "tmux attach -t %s"
+		activate
+	end tell`, escaped)
 	return exec.Command("osascript", "-e", script).Run()
 }

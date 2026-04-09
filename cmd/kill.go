@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hadefication/cece/internal/config"
 	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +43,10 @@ func runKill(cmd *cobra.Command, args []string) error {
 	}
 
 	name := args[0]
+
+	if err := config.ValidateName(name); err != nil {
+		return fmt.Errorf("invalid session name: %w", err)
+	}
 
 	// Try exact match
 	if tmux.SessionExists(name) {

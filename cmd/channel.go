@@ -74,9 +74,12 @@ func runChannel(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(1 * time.Second)
 
-	claudeCommand := fmt.Sprintf("claude --channels %s --enable-auto-mode", ch.Plugin)
+	claudeCommand := fmt.Sprintf("claude --channels '%s' --enable-auto-mode --permission-mode %s", tmux.ShellEscape(ch.Plugin), resolvePermissionMode(permissionMode))
+	if chrome {
+		claudeCommand += " --chrome"
+	}
 	if profileDir != "" {
-		claudeCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", profileDir, claudeCommand)
+		claudeCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCommand)
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCommand); err != nil {

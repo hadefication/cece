@@ -81,12 +81,12 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(1 * time.Second)
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", claudeName, resolvePermissionMode(permissionMode))
+	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(claudeName), resolvePermissionMode(permissionMode))
 	if chrome {
 		claudeCmd += " --chrome"
 	}
 	if profileDir != "" {
-		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", profileDir, claudeCmd)
+		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {

@@ -38,10 +38,18 @@ func init() {
 }
 
 func resolvePermissionMode(mode string) string {
-	if mode == "yolo" {
-		return "bypassPermissions"
+	valid := map[string]string{
+		"auto":    "auto",
+		"default": "default",
+		"plan":    "plan",
+		"yolo":    "bypassPermissions",
 	}
-	return mode
+	resolved, ok := valid[mode]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "Error: invalid permission mode %q. Valid modes: auto, default, plan, yolo\n", mode)
+		os.Exit(1)
+	}
+	return resolved
 }
 
 func checkClaude() error {

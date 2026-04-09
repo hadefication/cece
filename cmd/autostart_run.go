@@ -50,7 +50,9 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 
 	if tmux.SessionExists(tmuxSession) {
 		logger.Printf("Killing stale %s session", tmuxSession)
-		tmux.KillSession(tmuxSession)
+		if err := tmux.KillSession(tmuxSession); err != nil {
+			logger.Printf("Warning: could not kill stale session: %v", err)
+		}
 		time.Sleep(2 * time.Second)
 	}
 
@@ -78,9 +80,12 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 	}
 	time.Sleep(2 * time.Second)
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", sessionName, resolvePermissionMode(permissionMode))
+	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(sessionName), resolvePermissionMode(permissionMode))
+	if chrome {
+		claudeCmd += " --chrome"
+	}
 	if profileDir != "" {
-		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", profileDir, claudeCmd)
+		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {

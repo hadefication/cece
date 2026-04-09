@@ -48,12 +48,15 @@ func runChannelAdd(cmd *cobra.Command, args []string) error {
 	if plugin == "" {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Plugin identifier: ")
-		plugin, _ = reader.ReadString('\n')
+		plugin, err = reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("reading plugin identifier: %w", err)
+		}
 		plugin = strings.TrimSpace(plugin)
 	}
 
-	if plugin == "" {
-		return fmt.Errorf("plugin identifier cannot be empty")
+	if err := config.ValidatePlugin(plugin); err != nil {
+		return err
 	}
 
 	cfg.Channels[name] = config.Channel{Plugin: plugin}
