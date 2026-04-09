@@ -11,7 +11,7 @@ import (
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize cece configuration",
+	Short: "Initialize configuration",
 	RunE:  runInit,
 }
 
@@ -21,7 +21,7 @@ func init() {
 
 func runInit(cmd *cobra.Command, args []string) error {
 	if config.Exists() {
-		fmt.Printf("cece is already initialized at %s\n", config.Dir())
+		fmt.Printf("Already initialized at %s\n", config.Dir())
 		return nil
 	}
 
@@ -41,7 +41,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("cece initialized at %s\n\n", config.Dir())
+	fmt.Printf("Initialized at %s\n\n", config.Dir())
 	fmt.Println("Next steps:")
 	fmt.Println("  cece profile add work          # add a profile")
 	fmt.Println("  cece channel add imessage      # configure a channel")

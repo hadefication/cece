@@ -10,7 +10,7 @@ import (
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Manage cece configuration",
+	Short: "Manage configuration",
 }
 
 var configShowCmd = &cobra.Command{
@@ -20,7 +20,7 @@ var configShowCmd = &cobra.Command{
 		data, err := os.ReadFile(config.FilePath())
 		if err != nil {
 			if os.IsNotExist(err) {
-				return fmt.Errorf("cece is not initialized. Run: cece init")
+				return fmt.Errorf("Not initialized. Run: cece init")
 			}
 			return err
 		}

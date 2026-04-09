@@ -18,7 +18,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "cece",
 	Short: "Claude Code session manager",
-	Long:  "cece — manage Claude Code sessions, profiles, channels, and autostart.",
+	Long:  "Manage Claude Code sessions, profiles, channels, and autostart.",
 	RunE:  runRoot,
 }
 

@@ -11,7 +11,7 @@ import (
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all cece-managed sessions",
+	Short: "List all managed sessions",
 	RunE:  runList,
 }
 
@@ -25,7 +25,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	defaultExists := tmux.SessionExists("cece-default")
 
 	if len(remoteSessions) == 0 && len(channelSessions) == 0 && !defaultExists {
-		fmt.Println("No cece sessions running.")
+		fmt.Println("No sessions running.")
 		return nil
 	}
 

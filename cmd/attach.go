@@ -12,7 +12,7 @@ import (
 
 var attachCmd = &cobra.Command{
 	Use:   "attach [name]",
-	Short: "Attach to a cece-managed tmux session",
+	Short: "Attach to a managed tmux session",
 	Args:  cobra.MaximumNArgs(1),
 	RunE:  runAttach,
 }
