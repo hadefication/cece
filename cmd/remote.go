@@ -32,6 +32,17 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Auto-fix tmux-resurrect if needed (one-time patch for existing users)
+	if status, _, err := tmux.ResurrectFixStatus(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not check tmux-resurrect config: %v\n", err)
+	} else if status == "needed" {
+		if patchErr := tmux.ApplyResurrectFix(); patchErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not patch .tmux.conf: %v\n", patchErr)
+		} else {
+			fmt.Println("✓ Patched .tmux.conf to exclude cece sessions from tmux-resurrect saves")
+		}
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err

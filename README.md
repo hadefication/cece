@@ -161,6 +161,20 @@ cece remote stop myproject         # stop a specific session
 cece remote stop                   # stop all remote sessions
 ```
 
+### tmux-resurrect / tmux-continuum
+
+If you use [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) with [tmux-continuum](https://github.com/tmux-plugins/tmux-continuum), stopped remote sessions will be restored as empty shells on tmux restart — because resurrect saves all tmux sessions, including `cece-remote-*` ones.
+
+To prevent this, add a post-save hook to your `.tmux.conf` that strips cece sessions from the resurrect file:
+
+```bash
+set -g @resurrect-hook-post-save-all 'dir=$(tmux show-option -gqv @resurrect-dir); dir="${dir:-${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect}"; target="$dir/$(readlink "$dir/last")"; [ -f "$target" ] && perl -i -ne "print unless /cece-remote-/" "$target"'
+```
+
+> **Note:** `cece init` and `cece remote` will auto-detect resurrect+continuum and patch your `.tmux.conf` automatically. The manual config above is only needed if you prefer to do it yourself.
+
+This lets cece remain the sole manager of its sessions — resurrect won't bring them back uninvited.
+
 ## Autostart
 
 Start Claude Code automatically on boot (macOS only). Uses a LaunchAgent to create a tmux session with Claude Code on login.

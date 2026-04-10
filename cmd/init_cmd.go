@@ -6,6 +6,7 @@ import (
 
 	"github.com/hadefication/cece/internal/config"
 	"github.com/hadefication/cece/internal/session"
+	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +44,22 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Initialized at %s\n\n", config.Dir())
+
+	// Check for tmux-resurrect + continuum and apply fix if needed
+	status, _, err := tmux.ResurrectFixStatus()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not check tmux-resurrect config: %v\n", err)
+	} else if status == "needed" {
+		if err := tmux.ApplyResurrectFix(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not patch .tmux.conf: %v\n", err)
+			fmt.Fprintln(os.Stderr, "  Add this manually to prevent stopped sessions from respawning:")
+			fmt.Fprintf(os.Stderr, "  See: cece doctor\n")
+		} else {
+			fmt.Println("✓ Patched .tmux.conf to exclude cece sessions from tmux-resurrect saves")
+		}
+	}
+
+	fmt.Println()
 	fmt.Println("Next steps:")
 	fmt.Println("  cece profile add work          # add a profile")
 	fmt.Println("  cece channel add imessage      # configure a channel")

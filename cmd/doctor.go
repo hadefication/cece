@@ -9,6 +9,7 @@ import (
 	"github.com/hadefication/cece/internal/launchagent"
 	"github.com/hadefication/cece/internal/systemd"
 	"github.com/hadefication/cece/internal/tmux"
+
 	"github.com/spf13/cobra"
 )
 
@@ -102,6 +103,22 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		}
 	default:
 		fmt.Println("- Autostart not available on this platform")
+	}
+
+	// tmux-resurrect compatibility
+	resStatus, _, resErr := tmux.ResurrectFixStatus()
+	if resErr != nil {
+		fmt.Printf("- Could not check tmux-resurrect config: %v\n", resErr)
+	} else {
+		switch resStatus {
+		case "applied":
+			fmt.Println("✓ tmux-resurrect hook configured (cece sessions excluded from saves)")
+		case "needed":
+			fmt.Println("✗ tmux-resurrect + continuum detected without cece hook")
+			fmt.Println("  Stopped remote sessions will respawn as empty shells on tmux restart.")
+			fmt.Println("  This will be auto-fixed on your next 'cece remote' call.")
+			issues++
+		}
 	}
 
 	// Active sessions
