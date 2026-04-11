@@ -203,8 +203,12 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	// On macOS, ad-hoc sign the binary so Gatekeeper doesn't kill it.
 	if runtime.GOOS == "darwin" {
-		if err := exec.Command("codesign", "--force", "--sign", "-", currentBinary).Run(); err != nil {
-			return fmt.Errorf("code signing binary: %w", err)
+		if _, err := exec.LookPath("codesign"); err == nil {
+			if err := exec.Command("codesign", "--force", "--sign", "-", currentBinary).Run(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: could not sign binary: %v\n", err)
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, "Warning: codesign not found — binary may be blocked by Gatekeeper")
 		}
 	}
 

@@ -5,9 +5,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/hadefication/cece/internal/config"
 	"github.com/hadefication/cece/internal/session"
+	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
@@ -95,20 +97,29 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeArgs := []string{"--name", sessionName, "--permission-mode", pm}
+	baseArgs := fmt.Sprintf("--name '%s' --permission-mode %s", tmux.ShellEscape(sessionName), pm)
 	if tmpl.Chrome || chrome {
-		claudeArgs = append(claudeArgs, "--chrome")
-	}
-	if !fresh {
-		claudeArgs = append(claudeArgs, "--continue")
-	}
-	if tmpl.Prompt != "" {
-		claudeArgs = append(claudeArgs, "--prompt", tmpl.Prompt)
-	} else if initialPrompt != "" {
-		claudeArgs = append(claudeArgs, "--prompt", initialPrompt)
+		baseArgs += " --chrome"
 	}
 
-	claudeCmd := exec.Command("claude", claudeArgs...)
+	var promptArgs string
+	if tmpl.Prompt != "" {
+		sanitized := strings.ReplaceAll(tmpl.Prompt, "\n", " ")
+		promptArgs = fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(sanitized))
+	} else if initialPrompt != "" {
+		sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
+		promptArgs = fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(sanitized))
+	}
+
+	shellCmd := "claude " + baseArgs
+	if !fresh {
+		freshCmd := shellCmd + promptArgs
+		shellCmd += " --continue" + promptArgs + " || " + freshCmd
+	} else {
+		shellCmd += promptArgs
+	}
+
+	claudeCmd := exec.Command("sh", "-c", shellCmd)
 	claudeCmd.Dir = dir
 	claudeCmd.Stdin = os.Stdin
 	claudeCmd.Stdout = os.Stdout

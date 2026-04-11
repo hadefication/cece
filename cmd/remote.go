@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/hadefication/cece/internal/config"
@@ -99,6 +100,10 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	}
 
 	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, true)
+	if !fresh {
+		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, true)
+		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
+	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)
@@ -131,7 +136,8 @@ func runRemote(cmd *cobra.Command, args []string) error {
 
 	if initialPrompt != "" {
 		time.Sleep(2 * time.Second)
-		if err := tmux.SendKeys(tmuxSession, initialPrompt); err != nil {
+		sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
+		if err := tmux.SendKeys(tmuxSession, sanitized); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: could not send initial prompt: %v\n", err)
 		} else {
 			fmt.Printf("  Sent prompt: %s\n", initialPrompt)

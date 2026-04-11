@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/hadefication/cece/internal/config"
@@ -131,7 +132,16 @@ func runRoot(cmd *cobra.Command, args []string) error {
 
 	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, false)
 	if initialPrompt != "" {
-		claudeCmd += fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(initialPrompt))
+		sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
+		claudeCmd += fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(sanitized))
+	}
+	if !fresh {
+		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, false)
+		if initialPrompt != "" {
+			sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
+			baseCmd += fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(sanitized))
+		}
+		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
@@ -177,3 +187,12 @@ func buildClaudeCmd(name, pm, profileDir string, withResume, remoteControl bool)
 	}
 	return claudeCmd
 }
+
+// wrapCmdWithFallback takes a fully-assembled shell command that includes
+// "--continue" and builds a "try || fallback" string by constructing the
+// fallback from the same parts without "--continue". This avoids fragile
+// string surgery on the final command.
+func wrapCmdWithFallback(base, continueCmd string) string {
+	return continueCmd + " || " + base
+}
+

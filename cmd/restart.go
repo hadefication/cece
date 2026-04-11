@@ -139,6 +139,10 @@ func restartDefault(cfg *config.Config) error {
 	}
 
 	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, false)
+	if !fresh {
+		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, false)
+		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
+	}
 	if err := tmux.SendKeys(target, claudeCmd); err != nil {
 		return fmt.Errorf("sending claude command: %w", err)
 	}
@@ -184,6 +188,10 @@ func restartRemote(cfg *config.Config, tmuxSession, dirName string) error {
 	}
 
 	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, true)
+	if !fresh {
+		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, true)
+		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
+	}
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		return fmt.Errorf("sending claude command: %w", err)
 	}
@@ -222,15 +230,20 @@ func restartChannel(cfg *config.Config, tmuxSession, channelName string) error {
 		return err
 	}
 
-	claudeCmd := fmt.Sprintf("claude --channels '%s' --enable-auto-mode --permission-mode %s", tmux.ShellEscape(ch.Plugin), pm)
+	baseCmd := fmt.Sprintf("claude --channels '%s' --enable-auto-mode --permission-mode %s", tmux.ShellEscape(ch.Plugin), pm)
 	if chrome {
-		claudeCmd += " --chrome"
+		baseCmd += " --chrome"
 	}
+	claudeCmd := baseCmd
 	if !fresh {
 		claudeCmd += " --continue"
 	}
 	if profileDir != "" {
 		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
+		baseCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), baseCmd)
+	}
+	if !fresh {
+		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
@@ -257,12 +270,14 @@ func restartByName(name string) error {
 		return err
 	}
 
-	claudeCmd := fmt.Sprintf("claude --permission-mode %s", pm)
+	baseCmd := fmt.Sprintf("claude --permission-mode %s", pm)
 	if chrome {
-		claudeCmd += " --chrome"
+		baseCmd += " --chrome"
 	}
+	claudeCmd := baseCmd
 	if !fresh {
 		claudeCmd += " --continue"
+		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
 
 	if err := tmux.SendKeys(name, claudeCmd); err != nil {

@@ -2,6 +2,7 @@ package tmux
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -92,9 +93,12 @@ func ShellEscape(s string) string {
 }
 
 // AppleScriptEscape escapes a string for safe use inside AppleScript double-quoted strings.
+// Also escapes single quotes since the value is placed inside a shell single-quote context
+// within the AppleScript string (e.g., do script "tmux attach -t '%s'").
 func AppleScriptEscape(s string) string {
 	s = strings.ReplaceAll(s, "\\", "\\\\")
 	s = strings.ReplaceAll(s, "\"", "\\\"")
+	s = strings.ReplaceAll(s, "'", "\\'")
 	return s
 }
 
@@ -136,5 +140,7 @@ func CloseTerminalForSession(session string) {
 			end repeat
 		end tell
 	end if`, escaped)
-	exec.Command("osascript", "-e", script).Run()
+	if err := exec.Command("osascript", "-e", script).Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not close Terminal window for session %q: %v\n", session, err)
+	}
 }

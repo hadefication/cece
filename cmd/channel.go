@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/hadefication/cece/internal/config"
@@ -84,15 +85,20 @@ func runChannel(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCommand := fmt.Sprintf("claude --channels '%s' --enable-auto-mode --permission-mode %s", tmux.ShellEscape(ch.Plugin), pm)
+	baseCommand := fmt.Sprintf("claude --channels '%s' --enable-auto-mode --permission-mode %s", tmux.ShellEscape(ch.Plugin), pm)
 	if chrome {
-		claudeCommand += " --chrome"
+		baseCommand += " --chrome"
 	}
+	claudeCommand := baseCommand
 	if !fresh {
 		claudeCommand += " --continue"
 	}
 	if profileDir != "" {
 		claudeCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCommand)
+		baseCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), baseCommand)
+	}
+	if !fresh {
+		claudeCommand = wrapCmdWithFallback(baseCommand, claudeCommand)
 	}
 
 	if err := tmux.SendKeys(tmuxSession, claudeCommand); err != nil {
@@ -114,7 +120,8 @@ func runChannel(cmd *cobra.Command, args []string) error {
 
 	if initialPrompt != "" {
 		time.Sleep(2 * time.Second)
-		if err := tmux.SendKeys(tmuxSession, initialPrompt); err != nil {
+		sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
+		if err := tmux.SendKeys(tmuxSession, sanitized); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: could not send initial prompt: %v\n", err)
 		}
 	}

@@ -89,13 +89,16 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s --continue", tmux.ShellEscape(sessionName), pm)
+	baseCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(sessionName), pm)
 	if chrome {
-		claudeCmd += " --chrome"
+		baseCmd += " --chrome"
 	}
+	claudeCmd := baseCmd + " --continue"
 	if profileDir != "" {
 		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
+		baseCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), baseCmd)
 	}
+	claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)
