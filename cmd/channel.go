@@ -51,6 +51,10 @@ func runChannel(cmd *cobra.Command, args []string) error {
 	tmuxSession := session.TmuxChannelName(profile, name)
 
 	if tmux.SessionExists(tmuxSession) {
+		if detached {
+			fmt.Printf("Channel %s already running.\n", tmuxSession)
+			return nil
+		}
 		claudeCmd := exec.Command("tmux", "attach-session", "-t", tmuxSession)
 		claudeCmd.Stdin = os.Stdin
 		claudeCmd.Stdout = os.Stdout
@@ -84,6 +88,9 @@ func runChannel(cmd *cobra.Command, args []string) error {
 	if chrome {
 		claudeCommand += " --chrome"
 	}
+	if !fresh {
+		claudeCommand += " --resume"
+	}
 	if profileDir != "" {
 		claudeCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCommand)
 	}
@@ -110,6 +117,11 @@ func runChannel(cmd *cobra.Command, args []string) error {
 		if err := tmux.SendKeys(tmuxSession, initialPrompt); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: could not send initial prompt: %v\n", err)
 		}
+	}
+
+	if detached {
+		fmt.Printf("Channel %s started (detached).\n", tmuxSession)
+		return nil
 	}
 
 	attachCmd := exec.Command("tmux", "attach-session", "-t", tmuxSession)

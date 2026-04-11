@@ -20,6 +20,7 @@ var (
 	permissionMode string
 	initialPrompt  string
 	fresh          bool
+	detached       bool
 )
 
 var rootCmd = &cobra.Command{
@@ -42,6 +43,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&permissionMode, "permission-mode", "auto", "permission mode: auto, default, plan, yolo (bypass permissions)")
 	rootCmd.PersistentFlags().StringVar(&initialPrompt, "prompt", "", "initial prompt to send after session starts")
 	rootCmd.PersistentFlags().BoolVar(&fresh, "fresh", false, "start a fresh Claude session instead of resuming")
+	rootCmd.PersistentFlags().BoolVarP(&detached, "detached", "d", false, "run in detached tmux session without attaching")
 }
 
 func resolvePermissionMode(mode string) (string, error) {
@@ -88,8 +90,12 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		tmuxSession = "cece-default-" + profile
 	}
 
-	// If session already exists, just attach
+	// If session already exists, attach (unless detached)
 	if tmux.SessionExists(tmuxSession) {
+		if detached {
+			fmt.Printf("Session %s already running.\n", tmuxSession)
+			return nil
+		}
 		fmt.Printf("Attaching to existing session %s\n", tmuxSession)
 		return attachToSession(tmuxSession)
 	}
@@ -142,6 +148,12 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		Timestamp: time.Now(),
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
+	}
+
+	if detached {
+		fmt.Printf("Session %s started (detached).\n", tmuxSession)
+		fmt.Printf("Attach with: tmux attach -t %s\n", tmuxSession)
+		return nil
 	}
 
 	return attachToSession(tmuxSession)

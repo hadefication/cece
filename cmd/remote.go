@@ -98,13 +98,7 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s", tmux.ShellEscape(claudeName), pm)
-	if chrome {
-		claudeCmd += " --chrome"
-	}
-	if profileDir != "" {
-		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
-	}
+	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, true)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)
@@ -144,8 +138,10 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := tmux.OpenTerminalAttached(tmuxSession); err != nil {
-		fmt.Printf("Could not open Terminal.app. Attach manually with: tmux attach -t %s\n", tmuxSession)
+	if !detached {
+		if err := tmux.OpenTerminalAttached(tmuxSession); err != nil {
+			fmt.Printf("Could not open Terminal.app. Attach manually with: tmux attach -t %s\n", tmuxSession)
+		}
 	}
 
 	return nil
