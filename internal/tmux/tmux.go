@@ -2,7 +2,6 @@ package tmux
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -140,7 +139,5 @@ func CloseTerminalForSession(session string) {
 			end repeat
 		end tell
 	end if`, escaped)
-	if err := exec.Command("osascript", "-e", script).Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not close Terminal window for session %q: %v\n", session, err)
-	}
+	exec.Command("osascript", "-e", script).Run()
 }

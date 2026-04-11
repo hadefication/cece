@@ -32,16 +32,20 @@ func KillTree(pid string) error {
 
 	time.Sleep(1 * time.Second)
 
-	// SIGKILL phase
+	// SIGKILL phase — only kill processes that are still alive
 	var killErrors []string
 	for _, child := range children {
-		exec.Command("pkill", "-KILL", "-P", child).Run()
-		if err := exec.Command("kill", "-KILL", child).Run(); err != nil {
-			killErrors = append(killErrors, child)
+		if exec.Command("kill", "-0", child).Run() == nil {
+			exec.Command("pkill", "-KILL", "-P", child).Run()
+			if err := exec.Command("kill", "-KILL", child).Run(); err != nil {
+				killErrors = append(killErrors, child)
+			}
 		}
 	}
-	if err := exec.Command("kill", "-KILL", pid).Run(); err != nil {
-		killErrors = append(killErrors, pid)
+	if exec.Command("kill", "-0", pid).Run() == nil {
+		if err := exec.Command("kill", "-KILL", pid).Run(); err != nil {
+			killErrors = append(killErrors, pid)
+		}
 	}
 
 	if len(killErrors) > 0 {
