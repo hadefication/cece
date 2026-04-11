@@ -1,4 +1,4 @@
-Run a code review and security review loop on recent changes. Keep iterating until all legitimate issues are resolved.
+Run a code review and security review loop on recent changes. Keep iterating until all legitimate issues are resolved. Do NOT tag or release — that is a separate step.
 
 ## Step 1: Identify changes
 
@@ -35,7 +35,11 @@ go test ./... -v
 
 All three must pass clean.
 
-## Step 5: Loop
+## Step 5: Commit and push
+
+If any fixes were applied, commit them with a descriptive message and push to origin. Do NOT tag or create a release.
+
+## Step 6: Loop
 
 If any fixes were applied in Step 4, go back to Step 1 — the fixes themselves may have introduced new issues. Re-identify the changed files (now including your fixes), re-run both reviewers, re-triage, and re-fix.
 
