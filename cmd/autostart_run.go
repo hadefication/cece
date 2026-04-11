@@ -94,11 +94,8 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 		baseCmd += " --chrome"
 	}
 	claudeCmd := baseCmd + " --continue"
-	if profileDir != "" {
-		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
-		baseCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), baseCmd)
-	}
 	claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
+	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)

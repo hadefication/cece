@@ -93,13 +93,10 @@ func runChannel(cmd *cobra.Command, args []string) error {
 	if !fresh {
 		claudeCommand += " --continue"
 	}
-	if profileDir != "" {
-		claudeCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCommand)
-		baseCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), baseCommand)
-	}
 	if !fresh {
 		claudeCommand = wrapCmdWithFallback(baseCommand, claudeCommand)
 	}
+	claudeCommand = wrapWithConfigDir(profileDir, claudeCommand)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCommand); err != nil {
 		tmux.KillSession(tmuxSession)

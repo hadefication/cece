@@ -138,11 +138,12 @@ func restartDefault(cfg *config.Config) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, false)
+	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, false)
 	if !fresh {
-		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, false)
+		baseCmd := buildClaudeCmd(claudeName, pm, false, false)
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
+	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
 	if err := tmux.SendKeys(target, claudeCmd); err != nil {
 		return fmt.Errorf("sending claude command: %w", err)
 	}
@@ -187,11 +188,12 @@ func restartRemote(cfg *config.Config, tmuxSession, dirName string) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, true)
+	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, true)
 	if !fresh {
-		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, true)
+		baseCmd := buildClaudeCmd(claudeName, pm, false, true)
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
+	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		return fmt.Errorf("sending claude command: %w", err)
 	}
@@ -238,13 +240,10 @@ func restartChannel(cfg *config.Config, tmuxSession, channelName string) error {
 	if !fresh {
 		claudeCmd += " --continue"
 	}
-	if profileDir != "" {
-		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
-		baseCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), baseCmd)
-	}
 	if !fresh {
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
+	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		return fmt.Errorf("sending claude command: %w", err)

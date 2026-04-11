@@ -130,19 +130,20 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, false)
+	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, false)
 	if initialPrompt != "" {
 		sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
 		claudeCmd += fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(sanitized))
 	}
 	if !fresh {
-		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, false)
+		baseCmd := buildClaudeCmd(claudeName, pm, false, false)
 		if initialPrompt != "" {
 			sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
 			baseCmd += fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(sanitized))
 		}
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
+	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)
@@ -170,7 +171,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 }
 
 // buildClaudeCmd constructs the claude shell command string for send-keys.
-func buildClaudeCmd(name, pm, profileDir string, withResume, remoteControl bool) string {
+func buildClaudeCmd(name, pm string, withResume, remoteControl bool) string {
 	claudeCmd := "claude"
 	if remoteControl {
 		claudeCmd += " --remote-control"
@@ -182,10 +183,16 @@ func buildClaudeCmd(name, pm, profileDir string, withResume, remoteControl bool)
 	if withResume {
 		claudeCmd += " --continue"
 	}
-	if profileDir != "" {
-		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
-	}
 	return claudeCmd
+}
+
+// wrapWithConfigDir prepends an export of CLAUDE_CONFIG_DIR to the command
+// so the env var persists in the shell for the claude process and its children.
+func wrapWithConfigDir(profileDir, cmd string) string {
+	if profileDir == "" {
+		return cmd
+	}
+	return fmt.Sprintf("export CLAUDE_CONFIG_DIR='%s' && %s", tmux.ShellEscape(profileDir), cmd)
 }
 
 // wrapCmdWithFallback takes a fully-assembled shell command that includes

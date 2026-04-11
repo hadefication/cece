@@ -99,11 +99,12 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, true)
+	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, true)
 	if !fresh {
-		baseCmd := buildClaudeCmd(claudeName, pm, profileDir, false, true)
+		baseCmd := buildClaudeCmd(claudeName, pm, false, true)
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
+	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)
