@@ -55,7 +55,7 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 			continue // file doesn't exist
 		}
 		if srcInfo.Mode()&os.ModeSymlink != 0 {
-			fmt.Printf("Warning: skipping %s (symlink)\n", file)
+			fmt.Fprintf(os.Stderr, "Warning: skipping %s (symlink)\n", file)
 			continue
 		}
 		data, err := os.ReadFile(src)
@@ -65,11 +65,19 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 		dst := filepath.Join(configDir, file)
 		// Check destination is not a symlink
 		if dstInfo, err := os.Lstat(dst); err == nil && dstInfo.Mode()&os.ModeSymlink != 0 {
-			fmt.Printf("Warning: skipping %s (destination is symlink)\n", file)
+			fmt.Fprintf(os.Stderr, "Warning: skipping %s (destination is symlink)\n", file)
 			continue
 		}
 		if err := os.WriteFile(dst, data, 0o600); err != nil {
-			fmt.Printf("Warning: could not copy %s: %v\n", file, err)
+			fmt.Fprintf(os.Stderr, "Warning: could not copy %s: %v\n", file, err)
+		}
+	}
+
+	// Inject profile context into CLAUDE.md so the model knows which config dir it's using
+	claudeMD := filepath.Join(configDir, "CLAUDE.md")
+	if _, err := os.Stat(claudeMD); err == nil {
+		if err := injectProfileSection(claudeMD, name, configDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not inject profile section into CLAUDE.md: %v\n", err)
 		}
 	}
 
@@ -78,7 +86,7 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 	if srcInfo, err := os.Lstat(skillsSrc); err == nil && srcInfo.IsDir() && srcInfo.Mode()&os.ModeSymlink == 0 {
 		skillsDst := filepath.Join(configDir, "skills")
 		if err := copyDir(skillsSrc, skillsDst); err != nil {
-			fmt.Printf("Warning: could not copy skills: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Warning: could not copy skills: %v\n", err)
 		}
 	}
 

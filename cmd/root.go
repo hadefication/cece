@@ -20,7 +20,7 @@ var (
 	chrome         bool
 	permissionMode string
 	initialPrompt  string
-	fresh          bool
+	resume         bool
 	detached       bool
 )
 
@@ -43,7 +43,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&chrome, "chrome", false, "enable Chrome browser automation")
 	rootCmd.PersistentFlags().StringVar(&permissionMode, "permission-mode", "auto", "permission mode: auto, default, plan, yolo (bypass permissions)")
 	rootCmd.PersistentFlags().StringVar(&initialPrompt, "prompt", "", "initial prompt to send after session starts")
-	rootCmd.PersistentFlags().BoolVar(&fresh, "fresh", false, "start a fresh Claude session instead of resuming")
+	rootCmd.PersistentFlags().BoolVar(&resume, "resume", false, "resume the previous Claude session instead of starting fresh")
 	rootCmd.PersistentFlags().BoolVarP(&detached, "detached", "d", false, "run in detached tmux session without attaching")
 }
 
@@ -130,12 +130,12 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, false)
+	claudeCmd := buildClaudeCmd(claudeName, pm, resume, false)
 	if initialPrompt != "" {
 		sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")
 		claudeCmd += fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(sanitized))
 	}
-	if !fresh {
+	if resume {
 		baseCmd := buildClaudeCmd(claudeName, pm, false, false)
 		if initialPrompt != "" {
 			sanitized := strings.ReplaceAll(initialPrompt, "\n", " ")

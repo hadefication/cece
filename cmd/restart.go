@@ -23,7 +23,7 @@ For remote sessions, provide the project directory name.
 For channel sessions, provide the channel name.
 Without arguments, restarts the default session.
 
-Use --fresh to start a new session instead of resuming.`,
+Use --resume to continue the previous session instead of starting fresh.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runRestart,
 }
@@ -138,8 +138,8 @@ func restartDefault(cfg *config.Config) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, false)
-	if !fresh {
+	claudeCmd := buildClaudeCmd(claudeName, pm, resume, false)
+	if resume {
 		baseCmd := buildClaudeCmd(claudeName, pm, false, false)
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
@@ -151,7 +151,7 @@ func restartDefault(cfg *config.Config) error {
 	logRestart(target, "interactive", dir)
 
 	fmt.Println("Claude restarted.")
-	if !fresh {
+	if resume {
 		fmt.Println("  Resuming previous conversation.")
 	}
 	return nil
@@ -188,8 +188,8 @@ func restartRemote(cfg *config.Config, tmuxSession, dirName string) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, true)
-	if !fresh {
+	claudeCmd := buildClaudeCmd(claudeName, pm, resume, true)
+	if resume {
 		baseCmd := buildClaudeCmd(claudeName, pm, false, true)
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
@@ -201,7 +201,7 @@ func restartRemote(cfg *config.Config, tmuxSession, dirName string) error {
 	logRestart(tmuxSession, "remote", "")
 
 	fmt.Println("Claude restarted.")
-	if !fresh {
+	if resume {
 		fmt.Println("  Resuming previous conversation.")
 	}
 	return nil
@@ -237,10 +237,10 @@ func restartChannel(cfg *config.Config, tmuxSession, channelName string) error {
 		baseCmd += " --chrome"
 	}
 	claudeCmd := baseCmd
-	if !fresh {
+	if resume {
 		claudeCmd += " --continue"
 	}
-	if !fresh {
+	if resume {
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
 	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
@@ -252,7 +252,7 @@ func restartChannel(cfg *config.Config, tmuxSession, channelName string) error {
 	logRestart(tmuxSession, "channel", "")
 
 	fmt.Println("Claude restarted.")
-	if !fresh {
+	if resume {
 		fmt.Println("  Resuming previous conversation.")
 	}
 	return nil
@@ -274,7 +274,7 @@ func restartByName(name string) error {
 		baseCmd += " --chrome"
 	}
 	claudeCmd := baseCmd
-	if !fresh {
+	if resume {
 		claudeCmd += " --continue"
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
@@ -286,7 +286,7 @@ func restartByName(name string) error {
 	logRestart(name, "session", "")
 
 	fmt.Println("Claude restarted.")
-	if !fresh {
+	if resume {
 		fmt.Println("  Resuming previous conversation.")
 	}
 	return nil

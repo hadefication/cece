@@ -14,14 +14,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var remoteStopAll bool
+
 var remoteStopCmd = &cobra.Command{
 	Use:   "stop [name]",
 	Short: "Stop remote control session(s)",
+	Long:  "Stop a specific remote session by name, or all remote sessions when no name is given.",
 	Args:  cobra.MaximumNArgs(1),
 	RunE:  runRemoteStop,
 }
 
 func init() {
+	remoteStopCmd.Flags().BoolVar(&remoteStopAll, "all", false, "stop all remote sessions (default when no name given)")
 	remoteCmd.AddCommand(remoteStopCmd)
 }
 
@@ -74,7 +78,7 @@ func runRemoteStop(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if len(args) > 0 {
+	if len(args) > 0 && !remoteStopAll {
 		name := args[0]
 		if err := config.ValidateName(name); err != nil {
 			return fmt.Errorf("invalid session name: %w", err)

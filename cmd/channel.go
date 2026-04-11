@@ -90,10 +90,10 @@ func runChannel(cmd *cobra.Command, args []string) error {
 		baseCommand += " --chrome"
 	}
 	claudeCommand := baseCommand
-	if !fresh {
+	if resume {
 		claudeCommand += " --continue"
 	}
-	if !fresh {
+	if resume {
 		claudeCommand = wrapCmdWithFallback(baseCommand, claudeCommand)
 	}
 	claudeCommand = wrapWithConfigDir(profileDir, claudeCommand)

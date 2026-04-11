@@ -5,7 +5,64 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+const profileMarkerStart = "<!-- cece:profile -->"
+const profileMarkerEnd = "<!-- /cece:profile -->"
+
+// injectProfileSection appends (or replaces) a profile context section in a
+// CLAUDE.md file so the AI model knows which config directory it is using.
+func injectProfileSection(claudeMDPath, profileName, configDir string) error {
+	// Refuse to modify symlinks — consistent with copyDir
+	info, err := os.Lstat(claudeMDPath)
+	if err != nil {
+		return fmt.Errorf("checking %s: %w", claudeMDPath, err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("refusing to modify %s: file is a symlink", claudeMDPath)
+	}
+
+	data, err := os.ReadFile(claudeMDPath)
+	if err != nil {
+		return fmt.Errorf("reading %s: %w", claudeMDPath, err)
+	}
+
+	content := string(data)
+
+	// Strip existing profile section if present
+	start := strings.Index(content, profileMarkerStart)
+	end := strings.Index(content, profileMarkerEnd)
+
+	if start != -1 && end != -1 {
+		if end < start {
+			return fmt.Errorf("malformed profile markers in %s: end marker appears before start marker", claudeMDPath)
+		}
+		content = strings.TrimRight(content[:start], "\n") + content[end+len(profileMarkerEnd):]
+	} else if start != -1 {
+		// Start marker without end — strip from start marker onward
+		content = strings.TrimRight(content[:start], "\n")
+	}
+
+	content = strings.TrimRight(content, "\n")
+
+	section := fmt.Sprintf(`
+
+%s
+## Profile
+
+This session is running under the **%s** profile.
+- Config directory: `+"`%s`"+`
+- Settings, skills, and credentials are loaded from this directory, not the default ~/.claude.
+%s`, profileMarkerStart, profileName, configDir, profileMarkerEnd)
+
+	content += section + "\n"
+
+	if err := os.WriteFile(claudeMDPath, []byte(content), 0o600); err != nil {
+		return fmt.Errorf("writing %s: %w", claudeMDPath, err)
+	}
+	return nil
+}
 
 // copyDir recursively copies a directory from src to dst, skipping symlinks.
 // Files are written with mode 0o600, directories with 0o755.

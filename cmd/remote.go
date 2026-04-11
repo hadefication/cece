@@ -99,8 +99,8 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCmd := buildClaudeCmd(claudeName, pm, !fresh, true)
-	if !fresh {
+	claudeCmd := buildClaudeCmd(claudeName, pm, resume, true)
+	if resume {
 		baseCmd := buildClaudeCmd(claudeName, pm, false, true)
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}

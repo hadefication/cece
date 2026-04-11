@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var killAll bool
+
 var killCmd = &cobra.Command{
 	Use:   "kill [name]",
 	Short: "Stop session(s)",
@@ -19,6 +21,7 @@ var killCmd = &cobra.Command{
 }
 
 func init() {
+	killCmd.Flags().BoolVar(&killAll, "all", false, "stop all sessions (default when no name given)")
 	rootCmd.AddCommand(killCmd)
 }
 
@@ -27,8 +30,8 @@ func runKill(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// No args — stop all cece sessions
-	if len(args) == 0 {
+	// --all or no args — stop all cece sessions
+	if killAll || len(args) == 0 {
 		sessions, err := tmux.ListSessions("cece-")
 		if err != nil {
 			return err

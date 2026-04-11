@@ -112,9 +112,9 @@ func runStart(cmd *cobra.Command, args []string) error {
 	}
 
 	shellCmd := "claude " + baseArgs
-	if !fresh {
-		freshCmd := shellCmd + promptArgs
-		shellCmd += " --continue" + promptArgs + " || " + freshCmd
+	if resume {
+		resumeCmd := shellCmd + " --continue" + promptArgs
+		shellCmd = resumeCmd + " || " + shellCmd + promptArgs
 	} else {
 		shellCmd += promptArgs
 	}

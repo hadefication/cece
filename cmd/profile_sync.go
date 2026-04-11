@@ -120,6 +120,14 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			fmt.Printf("  %s: synced %s\n", name, file)
+
+			// After syncing CLAUDE.md, re-inject the profile section
+			if file == "CLAUDE.md" {
+				claudeMD := filepath.Join(profileDir, "CLAUDE.md")
+				if err := injectProfileSection(claudeMD, name, profileDir); err != nil {
+					fmt.Printf("  %s: warning: could not inject profile section: %v\n", name, err)
+				}
+			}
 		}
 		for _, dir := range dirs {
 			src := filepath.Join(defaultDir, dir)
