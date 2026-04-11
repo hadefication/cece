@@ -73,6 +73,15 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Copy skills directory
+	skillsSrc := filepath.Join(defaultDir, "skills")
+	if srcInfo, err := os.Lstat(skillsSrc); err == nil && srcInfo.IsDir() && srcInfo.Mode()&os.ModeSymlink == 0 {
+		skillsDst := filepath.Join(configDir, "skills")
+		if err := copyDir(skillsSrc, skillsDst); err != nil {
+			fmt.Printf("Warning: could not copy skills: %v\n", err)
+		}
+	}
+
 	cfg.Profiles[name] = config.Profile{
 		ConfigDir: "~/.claude-" + name,
 	}

@@ -12,7 +12,7 @@ import (
 )
 
 var profileSyncCmd = &cobra.Command{
-	Use:   "sync <settings|claude-md|all>",
+	Use:   "sync <settings|claude-md|skills|all>",
 	Short: "Sync files from default profile to other profiles",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runProfileSync,
@@ -26,15 +26,19 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 	what := args[0]
 
 	var files []string
+	var dirs []string
 	switch what {
 	case "settings":
 		files = []string{"settings.json"}
 	case "claude-md":
 		files = []string{"CLAUDE.md"}
+	case "skills":
+		dirs = []string{"skills"}
 	case "all":
 		files = []string{"settings.json", "CLAUDE.md"}
+		dirs = []string{"skills"}
 	default:
-		return fmt.Errorf("unknown sync target %q. Use: settings, claude-md, or all", what)
+		return fmt.Errorf("unknown sync target %q. Use: settings, claude-md, skills, or all", what)
 	}
 
 	cfg, err := config.Load()
@@ -69,7 +73,8 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 		for name, p := range targets {
 			fmt.Printf("  %s (%s)\n", name, p.ConfigDir)
 		}
-		fmt.Printf("Files: %s\n", strings.Join(files, ", "))
+		all := append(files, dirs...)
+		fmt.Printf("Files: %s\n", strings.Join(all, ", "))
 		fmt.Print("Proceed? (y/N) ")
 
 		reader := bufio.NewReader(os.Stdin)
@@ -83,6 +88,10 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 
 	for name, p := range targets {
 		profileDir := config.ExpandHome(p.ConfigDir)
+		if err := config.ValidateProfileDir(profileDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: skipping profile %s: %v\n", name, err)
+			continue
+		}
 		for _, file := range files {
 			src := filepath.Join(defaultDir, file)
 			// Check source is not a symlink
@@ -111,6 +120,29 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			fmt.Printf("  %s: synced %s\n", name, file)
+		}
+		for _, dir := range dirs {
+			src := filepath.Join(defaultDir, dir)
+			srcInfo, err := os.Lstat(src)
+			if err != nil {
+				if os.IsNotExist(err) {
+					fmt.Printf("  %s: %s not found in default, skipping\n", name, dir)
+				} else {
+					fmt.Printf("  %s: error reading %s: %v\n", name, dir, err)
+				}
+				continue
+			}
+			// Lstat: IsDir() is false for symlinks, so this covers both cases
+			if !srcInfo.IsDir() {
+				fmt.Printf("  %s: skipping %s (not a directory or is a symlink)\n", name, dir)
+				continue
+			}
+			dst := filepath.Join(profileDir, dir)
+			if err := copyDir(src, dst); err != nil {
+				fmt.Printf("  %s: error syncing %s: %v\n", name, dir, err)
+				continue
+			}
+			fmt.Printf("  %s: synced %s\n", name, dir)
 		}
 	}
 
