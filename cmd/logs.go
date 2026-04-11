@@ -57,13 +57,12 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	// Capture pane history
-	out, err := exec.Command("tmux", "capture-pane", "-t", session, "-p",
-		"-S", fmt.Sprintf("-%d", logsLines)).Output()
+	out, err := tmux.CapturePane(session, logsLines)
 	if err != nil {
 		return fmt.Errorf("capturing pane output: %w", err)
 	}
 
-	fmt.Print(string(out))
+	fmt.Print(out)
 	return nil
 }
 

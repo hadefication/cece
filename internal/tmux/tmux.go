@@ -41,7 +41,6 @@ func KillSession(session string) error {
 	return exec.Command("tmux", "kill-session", "-t", session).Run()
 }
 
-
 func ListSessions(prefix string) ([]SessionInfo, error) {
 	out, err := exec.Command("tmux", "list-sessions", "-F", "#{session_name} #{session_created}").Output()
 	if err != nil {
@@ -90,6 +89,15 @@ func GetPanePID(session string) string {
 // It replaces single quotes with the standard shell escape sequence '\''
 func ShellEscape(s string) string {
 	return strings.ReplaceAll(s, "'", "'\\''")
+}
+
+func CapturePane(session string, lines int) (string, error) {
+	out, err := exec.Command("tmux", "capture-pane", "-t", session, "-p",
+		"-S", fmt.Sprintf("-%d", lines)).Output()
+	if err != nil {
+		return "", fmt.Errorf("capturing pane: %w", err)
+	}
+	return string(out), nil
 }
 
 func OpenTerminalAttached(session string) error {
