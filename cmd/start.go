@@ -100,7 +100,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 		claudeArgs = append(claudeArgs, "--chrome")
 	}
 	if !fresh {
-		claudeArgs = append(claudeArgs, "--resume")
+		claudeArgs = append(claudeArgs, "--continue")
 	}
 	if tmpl.Prompt != "" {
 		claudeArgs = append(claudeArgs, "--prompt", tmpl.Prompt)

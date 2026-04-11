@@ -170,7 +170,7 @@ func buildClaudeCmd(name, pm, profileDir string, withResume, remoteControl bool)
 		claudeCmd += " --chrome"
 	}
 	if withResume {
-		claudeCmd += " --resume"
+		claudeCmd += " --continue"
 	}
 	if profileDir != "" {
 		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)

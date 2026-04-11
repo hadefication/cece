@@ -42,6 +42,9 @@ func killSession(sessionName string) error {
 			return fmt.Errorf("could not kill tmux session %q: %w", sessionName, err)
 		}
 	}
+	// Close the Terminal.app window that was attached to this session
+	tmux.CloseTerminalForSession(sessionName)
+
 	if err := history.Log(history.Entry{
 		Session:   sessionName,
 		Type:      sessionType(sessionName),

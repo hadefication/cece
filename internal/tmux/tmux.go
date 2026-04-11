@@ -91,6 +91,13 @@ func ShellEscape(s string) string {
 	return strings.ReplaceAll(s, "'", "'\\''")
 }
 
+// AppleScriptEscape escapes a string for safe use inside AppleScript double-quoted strings.
+func AppleScriptEscape(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "\"", "\\\"")
+	return s
+}
+
 func CapturePane(session string, lines int) (string, error) {
 	out, err := exec.Command("tmux", "capture-pane", "-t", session, "-p",
 		"-S", fmt.Sprintf("-%d", lines)).Output()
@@ -101,9 +108,33 @@ func CapturePane(session string, lines int) (string, error) {
 }
 
 func OpenTerminalAttached(session string) error {
+	escaped := AppleScriptEscape(session)
 	script := fmt.Sprintf(`tell application "Terminal"
 		do script "tmux attach -t '%s'"
 		activate
-	end tell`, ShellEscape(session))
+	end tell`, escaped)
 	return exec.Command("osascript", "-e", script).Run()
+}
+
+// CloseTerminalForSession closes Terminal.app windows that were attached
+// to the given tmux session. Matches on the tab's scrollback content
+// containing the original attach command.
+func CloseTerminalForSession(session string) {
+	escaped := AppleScriptEscape(session)
+	script := fmt.Sprintf(`if application "Terminal" is running then
+		tell application "Terminal"
+			set windowsToClose to {}
+			repeat with w in windows
+				repeat with t in tabs of w
+					if contents of t contains "tmux attach -t '%s'" then
+						set end of windowsToClose to w
+					end if
+				end repeat
+			end repeat
+			repeat with w in windowsToClose
+				close w
+			end repeat
+		end tell
+	end if`, escaped)
+	exec.Command("osascript", "-e", script).Run()
 }

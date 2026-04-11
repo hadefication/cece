@@ -89,7 +89,7 @@ func runChannel(cmd *cobra.Command, args []string) error {
 		claudeCommand += " --chrome"
 	}
 	if !fresh {
-		claudeCommand += " --resume"
+		claudeCommand += " --continue"
 	}
 	if profileDir != "" {
 		claudeCommand = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCommand)

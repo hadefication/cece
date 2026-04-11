@@ -89,7 +89,7 @@ func runAutostartRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s --resume", tmux.ShellEscape(sessionName), pm)
+	claudeCmd := fmt.Sprintf("claude --remote-control --name '%s' --permission-mode %s --continue", tmux.ShellEscape(sessionName), pm)
 	if chrome {
 		claudeCmd += " --chrome"
 	}

@@ -227,7 +227,7 @@ func restartChannel(cfg *config.Config, tmuxSession, channelName string) error {
 		claudeCmd += " --chrome"
 	}
 	if !fresh {
-		claudeCmd += " --resume"
+		claudeCmd += " --continue"
 	}
 	if profileDir != "" {
 		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
@@ -262,7 +262,7 @@ func restartByName(name string) error {
 		claudeCmd += " --chrome"
 	}
 	if !fresh {
-		claudeCmd += " --resume"
+		claudeCmd += " --continue"
 	}
 
 	if err := tmux.SendKeys(name, claudeCmd); err != nil {
