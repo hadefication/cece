@@ -68,7 +68,10 @@ func runRestart(cmd *cobra.Command, args []string) error {
 	}
 
 	// Fuzzy search
-	allSessions, _ := tmux.ListSessions("cece-")
+	allSessions, err := tmux.ListSessions("cece-")
+	if err != nil {
+		return err
+	}
 	for _, s := range allSessions {
 		if strings.Contains(s.Name, name) {
 			return restartByName(s.Name)

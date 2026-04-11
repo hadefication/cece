@@ -30,6 +30,10 @@ func runKill(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if killAll && len(args) > 0 {
+		return fmt.Errorf("cannot use --all with a session name")
+	}
+
 	// --all or no args — stop all cece sessions
 	if killAll || len(args) == 0 {
 		sessions, err := tmux.ListSessions("cece-")

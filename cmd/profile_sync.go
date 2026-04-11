@@ -97,26 +97,30 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 			// Check source is not a symlink
 			srcInfo, err := os.Lstat(src)
 			if err != nil {
-				fmt.Printf("  %s: %s not found in default, skipping\n", name, file)
+				if os.IsNotExist(err) {
+					fmt.Fprintf(os.Stderr, "  %s: %s not found in default, skipping\n", name, file)
+				} else {
+					fmt.Fprintf(os.Stderr, "  %s: error reading %s: %v\n", name, file, err)
+				}
 				continue
 			}
 			if srcInfo.Mode()&os.ModeSymlink != 0 {
-				fmt.Printf("  %s: skipping %s (symlink)\n", name, file)
+				fmt.Fprintf(os.Stderr, "  %s: skipping %s (symlink)\n", name, file)
 				continue
 			}
 			data, err := os.ReadFile(src)
 			if err != nil {
-				fmt.Printf("  %s: %s not found in default, skipping\n", name, file)
+				fmt.Fprintf(os.Stderr, "  %s: could not read %s: %v\n", name, file, err)
 				continue
 			}
 			dst := filepath.Join(profileDir, file)
 			// Check destination is not a symlink
 			if dstInfo, err := os.Lstat(dst); err == nil && dstInfo.Mode()&os.ModeSymlink != 0 {
-				fmt.Printf("  %s: skipping %s (destination is symlink)\n", name, file)
+				fmt.Fprintf(os.Stderr, "  %s: skipping %s (destination is symlink)\n", name, file)
 				continue
 			}
 			if err := os.WriteFile(dst, data, 0o600); err != nil {
-				fmt.Printf("  %s: error writing %s: %v\n", name, file, err)
+				fmt.Fprintf(os.Stderr, "  %s: error writing %s: %v\n", name, file, err)
 				continue
 			}
 			fmt.Printf("  %s: synced %s\n", name, file)
@@ -125,7 +129,7 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 			if file == "CLAUDE.md" {
 				claudeMD := filepath.Join(profileDir, "CLAUDE.md")
 				if err := injectProfileSection(claudeMD, name, profileDir); err != nil {
-					fmt.Printf("  %s: warning: could not inject profile section: %v\n", name, err)
+					fmt.Fprintf(os.Stderr, "  %s: warning: could not inject profile section: %v\n", name, err)
 				}
 			}
 		}
@@ -134,20 +138,20 @@ func runProfileSync(cmd *cobra.Command, args []string) error {
 			srcInfo, err := os.Lstat(src)
 			if err != nil {
 				if os.IsNotExist(err) {
-					fmt.Printf("  %s: %s not found in default, skipping\n", name, dir)
+					fmt.Fprintf(os.Stderr, "  %s: %s not found in default, skipping\n", name, dir)
 				} else {
-					fmt.Printf("  %s: error reading %s: %v\n", name, dir, err)
+					fmt.Fprintf(os.Stderr, "  %s: error reading %s: %v\n", name, dir, err)
 				}
 				continue
 			}
 			// Lstat: IsDir() is false for symlinks, so this covers both cases
 			if !srcInfo.IsDir() {
-				fmt.Printf("  %s: skipping %s (not a directory or is a symlink)\n", name, dir)
+				fmt.Fprintf(os.Stderr, "  %s: skipping %s (not a directory or is a symlink)\n", name, dir)
 				continue
 			}
 			dst := filepath.Join(profileDir, dir)
 			if err := copyDir(src, dst); err != nil {
-				fmt.Printf("  %s: error syncing %s: %v\n", name, dir, err)
+				fmt.Fprintf(os.Stderr, "  %s: error syncing %s: %v\n", name, dir, err)
 				continue
 			}
 			fmt.Printf("  %s: synced %s\n", name, dir)

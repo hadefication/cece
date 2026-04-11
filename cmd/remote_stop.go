@@ -78,6 +78,10 @@ func runRemoteStop(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if remoteStopAll && len(args) > 0 {
+		return fmt.Errorf("cannot use --all with a session name")
+	}
+
 	if len(args) > 0 && !remoteStopAll {
 		name := args[0]
 		if err := config.ValidateName(name); err != nil {

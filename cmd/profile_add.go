@@ -60,6 +60,7 @@ func runProfileAdd(cmd *cobra.Command, args []string) error {
 		}
 		data, err := os.ReadFile(src)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not read %s: %v\n", file, err)
 			continue
 		}
 		dst := filepath.Join(configDir, file)

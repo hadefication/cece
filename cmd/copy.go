@@ -42,6 +42,9 @@ func injectProfileSection(claudeMDPath, profileName, configDir string) error {
 	} else if start != -1 {
 		// Start marker without end — strip from start marker onward
 		content = strings.TrimRight(content[:start], "\n")
+	} else if end != -1 {
+		// End marker without start — strip it
+		content = content[:end] + content[end+len(profileMarkerEnd):]
 	}
 
 	content = strings.TrimRight(content, "\n")
