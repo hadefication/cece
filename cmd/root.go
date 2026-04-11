@@ -9,6 +9,7 @@ import (
 	"github.com/hadefication/cece/internal/config"
 	"github.com/hadefication/cece/internal/history"
 	"github.com/hadefication/cece/internal/session"
+	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +19,7 @@ var (
 	chrome         bool
 	permissionMode string
 	initialPrompt  string
+	fresh          bool
 )
 
 var rootCmd = &cobra.Command{
@@ -39,6 +41,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&chrome, "chrome", false, "enable Chrome browser automation")
 	rootCmd.PersistentFlags().StringVar(&permissionMode, "permission-mode", "auto", "permission mode: auto, default, plan, yolo (bypass permissions)")
 	rootCmd.PersistentFlags().StringVar(&initialPrompt, "prompt", "", "initial prompt to send after session starts")
+	rootCmd.PersistentFlags().BoolVar(&fresh, "fresh", false, "start a fresh Claude session instead of resuming")
 }
 
 func resolvePermissionMode(mode string) (string, error) {
@@ -66,10 +69,29 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	if err := checkClaude(); err != nil {
 		return err
 	}
+	if err := tmux.CheckInstalled(); err != nil {
+		return err
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	tmuxSession := "cece-default"
+	if profile != "" {
+		tmuxSession = "cece-default-" + profile
+	}
+
+	// If session already exists, just attach
+	if tmux.SessionExists(tmuxSession) {
+		fmt.Printf("Attaching to existing session %s\n", tmuxSession)
+		return attachToSession(tmuxSession)
 	}
 
 	var profileDir string
@@ -85,31 +107,34 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		machine = session.DetectMachine()
 	}
 	username := session.CurrentUser()
-	dir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("cannot determine working directory: %w", err)
-	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("cannot determine home directory: %w", err)
 	}
-	sessionName := session.GenerateName(username, machine, profile, dir, home)
+	claudeName := session.GenerateName(username, machine, profile, dir, home)
+
+	if err := tmux.NewSession(tmuxSession, dir); err != nil {
+		return fmt.Errorf("creating tmux session: %w", err)
+	}
+	time.Sleep(1 * time.Second)
 
 	pm, err := resolvePermissionMode(permissionMode)
 	if err != nil {
 		return err
 	}
 
-	claudeArgs := []string{"--name", sessionName, "--permission-mode", pm}
-	if chrome {
-		claudeArgs = append(claudeArgs, "--chrome")
-	}
+	claudeCmd := buildClaudeCmd(claudeName, pm, profileDir, !fresh, false)
 	if initialPrompt != "" {
-		claudeArgs = append(claudeArgs, "--prompt", initialPrompt)
+		claudeCmd += fmt.Sprintf(" --prompt '%s'", tmux.ShellEscape(initialPrompt))
+	}
+
+	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
+		tmux.KillSession(tmuxSession)
+		return fmt.Errorf("sending claude command: %w", err)
 	}
 
 	if err := history.Log(history.Entry{
-		Session:   sessionName,
+		Session:   tmuxSession,
 		Type:      "interactive",
 		Action:    "start",
 		Dir:       dir,
@@ -119,13 +144,24 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
 	}
 
-	claudeCmd := exec.Command("claude", claudeArgs...)
-	claudeCmd.Stdin = os.Stdin
-	claudeCmd.Stdout = os.Stdout
-	claudeCmd.Stderr = os.Stderr
-	if profileDir != "" {
-		claudeCmd.Env = append(os.Environ(), "CLAUDE_CONFIG_DIR="+profileDir)
-	}
+	return attachToSession(tmuxSession)
+}
 
-	return claudeCmd.Run()
+// buildClaudeCmd constructs the claude shell command string for send-keys.
+func buildClaudeCmd(name, pm, profileDir string, withResume, remoteControl bool) string {
+	claudeCmd := "claude"
+	if remoteControl {
+		claudeCmd += " --remote-control"
+	}
+	claudeCmd += fmt.Sprintf(" --name '%s' --permission-mode %s", tmux.ShellEscape(name), pm)
+	if chrome {
+		claudeCmd += " --chrome"
+	}
+	if withResume {
+		claudeCmd += " --resume"
+	}
+	if profileDir != "" {
+		claudeCmd = fmt.Sprintf("CLAUDE_CONFIG_DIR='%s' %s", tmux.ShellEscape(profileDir), claudeCmd)
+	}
+	return claudeCmd
 }
