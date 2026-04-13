@@ -91,14 +91,28 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		tmuxSession = "cece-default-" + profile
 	}
 
-	// If session already exists, attach (unless detached)
+	// If session already exists, decide: resume or start fresh.
 	if tmux.SessionExists(tmuxSession) {
-		if detached {
-			fmt.Printf("Session %s already running.\n", tmuxSession)
-			return nil
+		if resume || detached {
+			if detached {
+				fmt.Printf("Session %s already running.\n", tmuxSession)
+				return nil
+			}
+			fmt.Printf("Attaching to existing session %s\n", tmuxSession)
+			return attachToSession(tmuxSession)
 		}
-		fmt.Printf("Attaching to existing session %s\n", tmuxSession)
-		return attachToSession(tmuxSession)
+		// Interactive without --resume: kill the old session and start fresh.
+		fmt.Fprintf(os.Stderr, "Replacing existing session %s\n", tmuxSession)
+		if err := tmux.KillSession(tmuxSession); err != nil {
+			return fmt.Errorf("killing existing session: %w", err)
+		}
+		// Wait for tmux to fully tear down the old session before creating a new one.
+		for i := 0; i < 10; i++ {
+			if !tmux.SessionExists(tmuxSession) {
+				break
+			}
+			time.Sleep(200 * time.Millisecond)
+		}
 	}
 
 	var profileDir string

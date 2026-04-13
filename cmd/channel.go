@@ -52,15 +52,29 @@ func runChannel(cmd *cobra.Command, args []string) error {
 	tmuxSession := session.TmuxChannelName(profile, name)
 
 	if tmux.SessionExists(tmuxSession) {
-		if detached {
-			fmt.Printf("Channel %s already running.\n", tmuxSession)
-			return nil
+		if resume || detached {
+			if detached {
+				fmt.Printf("Channel %s already running.\n", tmuxSession)
+				return nil
+			}
+			claudeCmd := exec.Command("tmux", "attach-session", "-t", tmuxSession)
+			claudeCmd.Stdin = os.Stdin
+			claudeCmd.Stdout = os.Stdout
+			claudeCmd.Stderr = os.Stderr
+			return claudeCmd.Run()
 		}
-		claudeCmd := exec.Command("tmux", "attach-session", "-t", tmuxSession)
-		claudeCmd.Stdin = os.Stdin
-		claudeCmd.Stdout = os.Stdout
-		claudeCmd.Stderr = os.Stderr
-		return claudeCmd.Run()
+		// Interactive without --resume: kill the old session and start fresh.
+		fmt.Fprintf(os.Stderr, "Replacing existing channel session %s\n", tmuxSession)
+		if err := tmux.KillSession(tmuxSession); err != nil {
+			return fmt.Errorf("killing existing session: %w", err)
+		}
+		// Wait for tmux to fully tear down the old session before creating a new one.
+		for i := 0; i < 10; i++ {
+			if !tmux.SessionExists(tmuxSession) {
+				break
+			}
+			time.Sleep(200 * time.Millisecond)
+		}
 	}
 
 	var profileDir string
