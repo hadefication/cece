@@ -117,12 +117,13 @@ func runRemote(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := history.Log(history.Entry{
-		Session:   tmuxSession,
-		Type:      "remote",
-		Action:    "start",
-		Dir:       projectDir,
-		Profile:   profile,
-		Timestamp: time.Now(),
+		Session:    tmuxSession,
+		ClaudeName: claudeName,
+		Type:       "remote",
+		Action:     "start",
+		Dir:        projectDir,
+		Profile:    profile,
+		Timestamp:  time.Now(),
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
 	}

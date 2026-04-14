@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hadefication/cece/internal/history"
 	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
@@ -47,8 +48,10 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	now := time.Now()
 
-	fmt.Printf("%-30s %-10s %-10s %-8s %s\n", "SESSION", "TYPE", "UPTIME", "PID", "DIRECTORY")
-	fmt.Printf("%-30s %-10s %-10s %-8s %s\n", "-------", "----", "------", "---", "---------")
+	nameMap := history.ClaudeNameMap()
+
+	fmt.Printf("%-30s %-10s %-10s %-8s %-50s %s\n", "SESSION", "TYPE", "UPTIME", "PID", "CLAUDE NAME", "DIRECTORY")
+	fmt.Printf("%-30s %-10s %-10s %-8s %-50s %s\n", "-------", "----", "------", "---", "-----------", "---------")
 
 	for _, s := range sessions {
 		uptime := "-"
@@ -66,7 +69,12 @@ func runStatus(cmd *cobra.Command, args []string) error {
 			dir = "-"
 		}
 
-		fmt.Printf("%-30s %-10s %-10s %-8s %s\n", s.Name, s.Type, uptime, pid, dir)
+		claudeName := nameMap[s.Name]
+		if claudeName == "" {
+			claudeName = "-"
+		}
+
+		fmt.Printf("%-30s %-10s %-10s %-8s %-50s %s\n", s.Name, s.Type, uptime, pid, claudeName, dir)
 	}
 
 	fmt.Printf("\n%d session(s) running.\n", len(sessions))

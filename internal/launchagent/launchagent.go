@@ -34,9 +34,10 @@ func PlistPath(profile string) string {
 
 func GeneratePlist(binaryPath, profile, homeDir string) string {
 	lbl := label(profile)
-	logPath := "/tmp/cece-autostart.log"
+	logDir := filepath.Join(homeDir, ".local", "state", "cece")
+	logPath := filepath.Join(logDir, "autostart.log")
 	if profile != "" {
-		logPath = fmt.Sprintf("/tmp/cece-autostart-%s.log", profile)
+		logPath = filepath.Join(logDir, fmt.Sprintf("autostart-%s.log", profile))
 	}
 
 	escapedBinaryPath := xmlEscape(binaryPath)
@@ -92,7 +93,13 @@ func Install(binaryPath, profile string) error {
 		return fmt.Errorf("creating LaunchAgents dir: %w", err)
 	}
 
-	if err := os.WriteFile(path, []byte(plist), 0o644); err != nil {
+	// Create log directory with restricted permissions
+	logDir := filepath.Join(home, ".local", "state", "cece")
+	if err := os.MkdirAll(logDir, 0o700); err != nil {
+		return fmt.Errorf("creating log dir: %w", err)
+	}
+
+	if err := os.WriteFile(path, []byte(plist), 0o600); err != nil {
 		return fmt.Errorf("writing plist: %w", err)
 	}
 
@@ -143,8 +150,13 @@ func IsLoaded(profile string) bool {
 }
 
 func LogPath(profile string) string {
-	if profile != "" {
-		return fmt.Sprintf("/tmp/cece-autostart-%s.log", profile)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
 	}
-	return "/tmp/cece-autostart.log"
+	logDir := filepath.Join(home, ".local", "state", "cece")
+	if profile != "" {
+		return filepath.Join(logDir, fmt.Sprintf("autostart-%s.log", profile))
+	}
+	return filepath.Join(logDir, "autostart.log")
 }

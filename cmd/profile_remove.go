@@ -55,7 +55,7 @@ func runProfileRemove(cmd *cobra.Command, args []string) error {
 	if resolved != "" {
 		dir = resolved
 	}
-	// Re-validate after symlink resolution
+	// Validate after symlink resolution
 	if err := config.ValidateProfileDir(dir); err != nil {
 		return err
 	}
@@ -63,6 +63,19 @@ func runProfileRemove(cmd *cobra.Command, args []string) error {
 	delete(cfg.Profiles, name)
 	if err := cfg.Save(); err != nil {
 		return err
+	}
+
+	// Re-resolve immediately before deletion to close TOCTOU window
+	// where a symlink could be swapped between validation and removal.
+	final, err := filepath.EvalSymlinks(dir)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("resolving profile dir: %w", err)
+	}
+	if final != "" {
+		if err := config.ValidateProfileDir(final); err != nil {
+			return err
+		}
+		dir = final
 	}
 
 	if err := os.RemoveAll(dir); err != nil {

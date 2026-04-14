@@ -165,12 +165,13 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := history.Log(history.Entry{
-		Session:   tmuxSession,
-		Type:      "interactive",
-		Action:    "start",
-		Dir:       dir,
-		Profile:   profile,
-		Timestamp: time.Now(),
+		Session:    tmuxSession,
+		ClaudeName: claudeName,
+		Type:       "interactive",
+		Action:     "start",
+		Dir:        dir,
+		Profile:    profile,
+		Timestamp:  time.Now(),
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: could not write history: %v\n", err)
 	}

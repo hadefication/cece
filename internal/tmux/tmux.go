@@ -30,7 +30,10 @@ func NewSession(name, workDir string) error {
 }
 
 func SendKeys(session, keys string) error {
-	return exec.Command("tmux", "send-keys", "-t", session, keys, "Enter").Run()
+	if err := exec.Command("tmux", "send-keys", "-t", session, "-l", keys).Run(); err != nil {
+		return err
+	}
+	return exec.Command("tmux", "send-keys", "-t", session, "Enter").Run()
 }
 
 func SendCtrlC(session string) error {

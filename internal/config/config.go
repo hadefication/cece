@@ -122,7 +122,7 @@ func Load() (*Config, error) {
 // Save marshals the config and writes it to FilePath(), creating parent
 // directories as needed.
 func (c *Config) Save() error {
-	if err := os.MkdirAll(Dir(), 0o755); err != nil {
+	if err := os.MkdirAll(Dir(), 0o700); err != nil {
 		return err
 	}
 

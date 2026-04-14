@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/hadefication/cece/internal/history"
 	"github.com/hadefication/cece/internal/tmux"
 	"github.com/spf13/cobra"
 )
@@ -31,9 +32,14 @@ func runRemoteList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	fmt.Printf("%-30s %s\n", "SESSION", "CREATED")
+	nameMap := history.ClaudeNameMap()
+	fmt.Printf("%-30s %-50s %s\n", "SESSION", "CLAUDE NAME", "CREATED")
 	for _, s := range sessions {
-		fmt.Printf("%-30s %s\n", s.Name, s.Created)
+		claudeName := nameMap[s.Name]
+		if claudeName == "" {
+			claudeName = "-"
+		}
+		fmt.Printf("%-30s %-50s %s\n", s.Name, claudeName, s.Created)
 	}
 	return nil
 }
