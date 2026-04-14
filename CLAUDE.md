@@ -59,3 +59,5 @@ Commands that accept a session name follow this resolution order: exact match â†
 ## Release
 
 GoReleaser builds multi-platform binaries (darwin/linux, amd64/arm64) via `.github/workflows/release.yml` on tag push. Self-update downloads from GitHub releases with SHA256 checksum verification.
+
+**Upgrading:** Always use `cece update` to install from GitHub releases â€” never `make install` or `go build`. The release binary has the correct version string injected by GoReleaser; a source build produces `version=dev` which breaks update checks and version reporting.
