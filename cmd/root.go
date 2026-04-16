@@ -158,6 +158,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
 	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
+	claudeCmd = fmt.Sprintf("cd '%s' && %s", tmux.ShellEscape(dir), claudeCmd)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)

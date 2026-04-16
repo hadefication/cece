@@ -1,7 +1,9 @@
 package tmux
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -26,7 +28,23 @@ func SessionExists(name string) bool {
 }
 
 func NewSession(name, workDir string) error {
-	return exec.Command("tmux", "new-session", "-d", "-s", name, "-c", workDir).Run()
+	info, err := os.Stat(workDir)
+	if err != nil {
+		return fmt.Errorf("invalid working directory %q: %w", workDir, err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("invalid working directory %q: not a directory", workDir)
+	}
+	cmd := exec.Command("tmux", "new-session", "-d", "-s", name, "-c", workDir)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		if stderr.Len() > 0 {
+			return fmt.Errorf("tmux new-session: %s: %w", strings.TrimSpace(stderr.String()), err)
+		}
+		return fmt.Errorf("tmux new-session: %w", err)
+	}
+	return nil
 }
 
 func SendKeys(session, keys string) error {

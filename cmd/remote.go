@@ -54,9 +54,33 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cannot determine working directory: %w", err)
 	}
 	if len(args) > 0 {
-		projectDir, err = filepath.Abs(args[0])
-		if err != nil {
-			return fmt.Errorf("resolving directory: %w", err)
+		// Try template lookup first, fall back to path resolution
+		if tmpl, exists := cfg.Templates[args[0]]; exists {
+			if tmpl.Dir == "" {
+				return fmt.Errorf("template %q: dir field is empty", args[0])
+			}
+			projectDir = config.ExpandHome(tmpl.Dir)
+			if strings.HasPrefix(projectDir, "~/") {
+				return fmt.Errorf("template %q: cannot expand home directory in path %q", args[0], tmpl.Dir)
+			}
+			if !filepath.IsAbs(projectDir) {
+				projectDir, err = filepath.Abs(projectDir)
+				if err != nil {
+					return fmt.Errorf("resolving template directory: %w", err)
+				}
+			}
+			info, err := os.Stat(projectDir)
+			if err != nil {
+				return fmt.Errorf("template %q: directory %q does not exist: %w", args[0], projectDir, err)
+			}
+			if !info.IsDir() {
+				return fmt.Errorf("template %q: path %q is not a directory", args[0], projectDir)
+			}
+		} else {
+			projectDir, err = filepath.Abs(args[0])
+			if err != nil {
+				return fmt.Errorf("resolving directory: %w", err)
+			}
 		}
 	}
 
@@ -105,6 +129,7 @@ func runRemote(cmd *cobra.Command, args []string) error {
 		claudeCmd = wrapCmdWithFallback(baseCmd, claudeCmd)
 	}
 	claudeCmd = wrapWithConfigDir(profileDir, claudeCmd)
+	claudeCmd = fmt.Sprintf("cd '%s' && %s", tmux.ShellEscape(projectDir), claudeCmd)
 
 	if err := tmux.SendKeys(tmuxSession, claudeCmd); err != nil {
 		tmux.KillSession(tmuxSession)
